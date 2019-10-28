@@ -63,7 +63,7 @@ import org.robovm.compiler.llvm.Value;
 import org.robovm.compiler.llvm.Variable;
 import org.robovm.compiler.llvm.VariableRef;
 import org.robovm.compiler.plugin.CompilerPlugin;
-import org.robovm.compiler.plugin.debug.DebugInformationTools;
+import org.robovm.compiler.plugin.debug.DebuggerDebugObjectFileInfo;
 import org.robovm.compiler.trampoline.Checkcast;
 import org.robovm.compiler.trampoline.Instanceof;
 import org.robovm.compiler.trampoline.Invoke;
@@ -84,7 +84,6 @@ import org.robovm.llvm.binding.Attribute;
 import org.robovm.llvm.binding.CodeGenFileType;
 import org.robovm.llvm.binding.CodeGenOptLevel;
 import org.robovm.llvm.binding.RelocMode;
-import org.robovm.llvm.debuginfo.DebugObjectFileInfo;
 import soot.BooleanType;
 import soot.ByteType;
 import soot.CharType;
@@ -132,6 +131,7 @@ import java.util.regex.Pattern;
 
 import static org.robovm.compiler.Annotations.*;
 import static org.robovm.compiler.Functions.*;
+import static org.robovm.compiler.StructMemberMethodCompiler.STRUCT_ATTRIBUTES_METHOD;
 import static org.robovm.compiler.Types.*;
 import static org.robovm.compiler.llvm.Type.*;
 
@@ -602,10 +602,10 @@ public class ClassCompiler {
     private static ModuleBuilder buildDebugInfoData(Config config, Clazz clazz, ObjectFile objectFile) throws IOException {
         ModuleBuilder debugInfoMb = null;
 
-        DebugObjectFileInfo debugInfo = clazz.getAttachment(DebugObjectFileInfo.class);
+        DebuggerDebugObjectFileInfo.RawData debugInfo = clazz.getAttachment(DebuggerDebugObjectFileInfo.RawData.class);
         if (debugInfo != null) {
             // read all binary data to file
-            byte[] debugDataBytes = DebugInformationTools.dumpDebugInfo(debugInfo);
+            byte[] debugDataBytes = DebuggerDebugObjectFileInfo.dumpDebugInfo(debugInfo);
             String debugInfoSymbol = Symbols.debugInfoSymbol(clazz.getInternalName());
             debugInfoMb = new ModuleBuilder();
             Global debugInfoSymbolGlobal = new Global(debugInfoSymbol, new ByteArrayConstant(debugDataBytes), true);
@@ -649,20 +649,17 @@ public class ClassCompiler {
             }
 
             // also need to add reference to @llvm.used otherwise linker will drop out this data as not used
+            // dkimitsa: always add it as array even if there is only one element as llvm.used is array of pointers
+            // and debug version of llvm will crash on assertion while validating type
             Global usedGlobal;
-            if (usedGlobalValues.size() > 1) {
-                ArrayConstant usedValuesArr = new ArrayConstant(new ArrayType(usedGlobalValues.size(), Type.I8_PTR),
-                        usedGlobalValues.toArray(new Value[usedGlobalValues.size()]));
-                usedGlobal = new Global("llvm.used", Linkage.appending, usedValuesArr, false, "llvm.metadata");
-            } else {
-                usedGlobal = new Global("llvm.used", Linkage.appending, new ConstantBitcast(debugInfoSymbolGlobal.ref(), Type.I8_PTR),
-                        false, "llvm.metadata");
-            }
+            ArrayConstant usedValuesArr = new ArrayConstant(new ArrayType(usedGlobalValues.size(), Type.I8_PTR),
+                    usedGlobalValues.toArray(new Value[usedGlobalValues.size()]));
+            usedGlobal = new Global("llvm.used", Linkage.appending, usedValuesArr, false, "llvm.metadata");
             debugInfoMb.addGlobal(usedGlobal);
 
             if (config.isDumpIntermediates()) {
                 File f = new File(config.getDebugInfoOFile(clazz).getAbsolutePath() + ".dump");
-                DebugInformationTools.dumpDebugInfoAsText(debugInfo, f);
+                DebuggerDebugObjectFileInfo.dumpDebugInfoAsText(debugInfo, f);
             }
         }
 
@@ -825,6 +822,10 @@ public class ClassCompiler {
             sootClass.addMethod(_sizeOf);
             SootMethod sizeOf = new SootMethod("sizeOf", Collections.EMPTY_LIST, IntType.v(), Modifier.PUBLIC | Modifier.STATIC | Modifier.NATIVE);
             sootClass.addMethod(sizeOf);
+
+            // method that will provide meta flags for runtime to help finding out if stret is required
+            SootMethod stretMeta = new SootMethod(STRUCT_ATTRIBUTES_METHOD, Collections.EMPTY_LIST, IntType.v(), Modifier.PUBLIC | Modifier.STATIC | Modifier.NATIVE);
+            sootClass.addMethod(stretMeta);
         }
         
         mb.addInclude(getClass().getClassLoader().getResource(String.format("header-%s-%s.ll", config.getOs().getFamily(), config.getArch())));
@@ -865,7 +866,7 @@ public class ClassCompiler {
             } else if (hasGlobalValueAnnotation(method)) {
                 function = globalValueMethod(method);
             } else if (isStruct(sootClass) && ("_sizeOf".equals(name) 
-                        || "sizeOf".equals(name) || hasStructMemberAnnotation(method))) {
+                        || "sizeOf".equals(name) || STRUCT_ATTRIBUTES_METHOD.equals(name) || hasStructMemberAnnotation(method))) {
                 function = structMember(method);
             } else if (method.isNative()) {
                 function = nativeMethod(method);

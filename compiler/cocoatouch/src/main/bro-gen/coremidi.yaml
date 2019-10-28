@@ -28,12 +28,12 @@ private_typedefs:
     CFPropertyListRef: CFPropertyList
     
 enums:
-    MIDINetworkConnectionPolicy: { marshaler: ValuedEnum.AsMachineSizedUIntMarshaler }
+    MIDINetworkConnectionPolicy: {}
     MIDIError: { first: kMIDIInvalidClient }
-    MIDIObjectType: { marshaler: ValuedEnum.AsSignedIntMarshaler }
-    MIDINotificationMessageID: { marshaler: ValuedEnum.AsSignedIntMarshaler }
-    MIDITransformType: { marshaler: ValuedEnum.AsUnsignedShortMarshaler }
-    MIDITransformControlType: { marshaler: ValuedEnum.AsUnsignedByteMarshaler }
+    MIDIObjectType: {}
+    MIDINotificationMessageID: {}
+    MIDITransformType: {}
+    MIDITransformControlType: {}
         
 classes:
     MIDINetworkConnection: # DONE
@@ -145,10 +145,12 @@ classes:
 
         # Structs
     MIDIPacketList:
+        annotations: ['@Packed(4)']
         skip_def_constructor: true
     MIDISysexSendRequest: {}
     MIDINotification: {}
-    MIDIPacket: {}
+    MIDIPacket:
+        annotations: ['@Packed(4)']
     MIDIObjectAddRemoveNotification: {}
     MIDIObjectPropertyChangeNotification: {}
     MIDIIOErrorNotification: {}
