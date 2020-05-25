@@ -18,9 +18,7 @@ package org.robovm.idea.ibxcode;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.compiler.CompilationException;
 import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.module.Module;
@@ -31,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.robovm.compiler.config.Config;
 import org.robovm.ibxcode.IBXcodeProject;
 import org.robovm.idea.RoboVmPlugin;
@@ -42,7 +41,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RoboVmIbXcodeProjectTask {
-    private static AtomicBoolean busy = new AtomicBoolean(false);
+    private static final AtomicBoolean busy = new AtomicBoolean(false);
     private final Module module;
     private Config.Builder builder;
     private Config config;
@@ -75,18 +74,14 @@ public class RoboVmIbXcodeProjectTask {
         }
 
         // compile module
-        CompilerManager.getInstance(project).make(module, new CompileStatusNotification() {
-            @Override
-            public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
-                if (aborted) {
-                    RoboVmPlugin.logDebug(project, "XCode project: compilation aborted");
-                    complete(null);
-                } else if (errors > 0) {
-                    Exception ex = new CompilationException("XCode project generation failed due compilation errors");
-                    complete(ex);
-                } else {
-                    startGeneratingWithClassPath(compileContext);
-                }
+        CompilerManager.getInstance(project).make(module, (aborted, errors, warnings, compileContext) -> {
+            if (aborted) {
+                RoboVmPlugin.logDebug(project, "XCode project: compilation aborted");
+                complete((String)null);
+            } else if (errors > 0) {
+                complete("XCode project generation failed due compilation errors");
+            } else {
+                startGeneratingWithClassPath(compileContext);
             }
         });
     }
@@ -145,11 +140,15 @@ public class RoboVmIbXcodeProjectTask {
     }
 
 
-    private void complete(Throwable exceptionIfAny) {
+    private void complete(@NotNull Throwable e) {
+        complete(e.getMessage());
+    }
+
+    private void complete(@Nullable String errorMessage) {
         // single exit point
-        if (exceptionIfAny != null) {
+        if (errorMessage != null) {
             Notifications.Bus.notify(new Notification( "XCode project", "XCode project",
-                    "Failed due error: " + exceptionIfAny.getMessage(), NotificationType.ERROR));
+                    "Failed due error: " + errorMessage, NotificationType.ERROR));
         }
 
         busy.set(false);
@@ -172,7 +171,7 @@ public class RoboVmIbXcodeProjectTask {
                 while (taskThread.isAlive() && !progress.isCanceled()) {
                     taskThread.join(500);
                 }
-                if (taskThread.isAlive() && progress.isCanceled()) {
+                if (taskThread.isAlive()) {
                     taskThread.interrupt();
                     taskThread.join(500);
                 }
@@ -201,15 +200,15 @@ public class RoboVmIbXcodeProjectTask {
         }
 
         @Override
-        public void onError(@NotNull Exception error) {
-            super.onError(error);
+        public void onThrowable(@NotNull Throwable error) {
+            super.onThrowable(error);
             exceptionIfHappened = error;
         }
 
         @Override
         public void onFinished() {
             super.onFinished();
-            complete(exceptionIfHappened);
+            complete(exceptionIfHappened != null ? exceptionIfHappened.getMessage() : null);
         }
     }
 
@@ -240,11 +239,11 @@ public class RoboVmIbXcodeProjectTask {
 
 
     static class IBConfigBuilder extends Config.Builder {
-        IBConfigBuilder() throws IOException {
+        IBConfigBuilder() {
         }
 
         @Override
-        public Config build() throws IOException {
+        public Config build() {
             // do not build any complex config as it is time consuming and not required at all for this task
             return this.config;
         }

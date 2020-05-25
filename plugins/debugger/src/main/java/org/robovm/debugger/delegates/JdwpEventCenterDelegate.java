@@ -23,6 +23,7 @@ import org.robovm.debugger.hooks.payloads.HooksEventPayload;
 import org.robovm.debugger.hooks.payloads.HooksThreadEventPayload;
 import org.robovm.debugger.hooks.payloads.HooksThreadStoppedEventPayload;
 import org.robovm.debugger.jdwp.JdwpConsts;
+import org.robovm.debugger.jdwp.handlers.eventrequest.events.EventData;
 import org.robovm.debugger.jdwp.handlers.eventrequest.events.IJdwpEventDelegate;
 import org.robovm.debugger.jdwp.handlers.eventrequest.events.JdwpClassLoadedEventData;
 import org.robovm.debugger.jdwp.handlers.eventrequest.events.JdwpEventData;
@@ -44,7 +45,8 @@ import org.robovm.debugger.state.instances.VmInstance;
 import org.robovm.debugger.state.instances.VmStackTrace;
 import org.robovm.debugger.state.instances.VmThread;
 import org.robovm.debugger.utils.DbgLogger;
-import org.robovm.debugger.utils.bytebuffer.ByteBufferPacket;
+import org.robovm.debugger.utils.bytebuffer.DataBufferReaderWriter;
+import org.robovm.debugger.utils.bytebuffer.DataByteBufferWriter;
 
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -53,13 +55,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.Predicate;
 
 /**
  * @author Demyan Kimitsa
  * Delegate that handles events from hooks.c and also event requests from JDWP
  */
 public class JdwpEventCenterDelegate implements IJdwpEventDelegate {
-    private DbgLogger log = DbgLogger.get(this.getClass().getSimpleName());
+    private final DbgLogger log = DbgLogger.get(this.getClass().getSimpleName());
 
     // all delegates and logic parts
     private final AllDelegates delegates;
@@ -67,7 +70,7 @@ public class JdwpEventCenterDelegate implements IJdwpEventDelegate {
     /**
      * list of event request ids that that went to target/simulator
      */
-    private Set<Integer> requestIdsInTarget = new HashSet<>();
+    private final Set<Integer> requestIdsInTarget = new HashSet<>();
 
     /**
      * thread that is reading events from hooks interface
@@ -77,18 +80,18 @@ public class JdwpEventCenterDelegate implements IJdwpEventDelegate {
     /**
      * Byte buffer payload to deliver event to JDWP
      */
-    private final ByteBufferPacket jdwpEventPayload;
+    private final DataBufferReaderWriter jdwpEventPayload;
 
     /**
      * queue to keep events from hooks channel
      */
-    private LinkedBlockingQueue<HooksEventPayload> hooksEventsQueue = new LinkedBlockingQueue<>();
+    private final LinkedBlockingQueue<HooksEventPayload> hooksEventsQueue = new LinkedBlockingQueue<>();
 
     // counter of request set
     private int jdwpEventRequestCounter = 100;
 
     // list of active event filters as received from JDWP
-    private List<JdwpEventRequest> jdwpEventRequests = new ArrayList<>();
+    private final List<JdwpEventRequest> jdwpEventRequests = new ArrayList<>();
 
     /** local flag that VM was resumed */
     private boolean vmStartedNotified;
@@ -100,7 +103,7 @@ public class JdwpEventCenterDelegate implements IJdwpEventDelegate {
     public JdwpEventCenterDelegate(AllDelegates delegates) {
         this.delegates = delegates;
 
-        jdwpEventPayload = new ByteBufferPacket();
+        jdwpEventPayload = new DataByteBufferWriter();
         jdwpEventPayload.setByteOrder(ByteOrder.BIG_ENDIAN);
     }
 
@@ -110,7 +113,7 @@ public class JdwpEventCenterDelegate implements IJdwpEventDelegate {
      */
     public void onConnectedToTarget() {
         // start thread to listen for events
-        this.hooksEventsThread = delegates.toolBox().createThread(() -> processEventsCycle(), "EventCenterThread");
+        this.hooksEventsThread = delegates.toolBox().createThread(this::processEventsCycle, "EventCenterThread");
 
         // there is a need to resume VM and do other things with target itself
         // do this in entry of that tread as it is not allowed here -- as this callback is being called from
@@ -326,9 +329,24 @@ public class JdwpEventCenterDelegate implements IJdwpEventDelegate {
                 if (thread.suspendCount() == 0)
                     throw new DebuggerException(JdwpConsts.Error.THREAD_NOT_SUSPENDED);
 
+                // simple event data and validator for step out/over operations to properly find back-stack to stop
+                // and make sure it is not in ignored class
+                class StackTraceValidator extends EventData implements Predicate<VmStackTrace> {
+                    String className;
+                    public String getClassName() { return className; }
+                    public boolean test(VmStackTrace vmStackTrace) {
+                        if (vmStackTrace.classInfo() instanceof ClassInfoImpl) {
+                            className = ((ClassInfoImpl) vmStackTrace.classInfo()).className().replace('/', '.');
+                            return request.test(this, JdwpConsts.EventModifier.CLASS_MATCH) &&
+                                    request.test(this, JdwpConsts.EventModifier.CLASS_EXCLUDE) ;
+                        }
+                        return false; // can't get class name
+                    }
+                }
+
                 // apply it to target
                 // size modifier is ignored as stepping in hooks implemented as line only
-                RuntimeUtils.RuntimeStepReference ref = delegates.runtime().step(thread, stepMod.depth());
+                RuntimeUtils.RuntimeStepReference ref = delegates.runtime().step(thread, stepMod.depth(), new StackTraceValidator());
 
                 // remember the request to be able to resume it in case some of criteria doesn't pass (e.g. class is filtered out)
                 // or execution is interrupted and stepping is canceled by exception event
@@ -532,29 +550,22 @@ public class JdwpEventCenterDelegate implements IJdwpEventDelegate {
         // filter data through event requests and deliver them to JDPW
         int suspendPolicy = deliverEventToJdpwFiltered(eventData);
         if (suspendPolicy <= 0) {
-            if (suspendPolicy < 0) {
-                // event was filtered out, e.g. JDWP client is not interested in it
-
-                // there are two cases when stepping has to be resumed
-                // 1. VM performed stepped event but thread is stopped in class that is filtered out, so we have to
-                //    continue stepping till stop that was requested
-                // 2. there was exception generated in VM (probably it will be handled) and JDWP client is not interested
-                //    in it, in this case stepping/stepping over/stepping out shall be resumed
-                if ((eventPayload.eventId() == HookConsts.events.THREAD_STEPPED || eventPayload.eventId() == HookConsts.events.EXCEPTION) &&
-                        stoppedThread != null && activeStepRequest != null && !((JdwpEventRequest) activeStepRequest.payload()).isCanceled()) {
-                    if (activeStepRequest.thread().refId() == stoppedThread.refId() && stoppedThread.suspendCount() == 0) {
-                        // step again
-                        delegates.runtime().restep(activeStepRequest);
-                        delegates.threads().onThreadSuspended(stoppedThread, stoppedThreadCallStack, false);
-                        return;
-                    }
-                }
-                // event didn't pass filters no need to keep suspended thread
-            }
-
-            // or it pass but suspend policy is none
-            if (stoppedThread != null)
+            // event was filtered out (suspendPolicy < 0), e.g. JDWP client is not interested in it
+            // or it was commanded not to suspend any thread (suspendPolicy == 0)
+            //
+            // if thread was suspended -- all stepping have been canceled in target.
+            // there are few cases when stepping has to be resumed
+            // 1. VM performed stepped event but thread is stopped in class that is filtered out, so we have to
+            //    continue stepping till stop that was requested
+            // 2. there was exception generated in VM (probably it will be handled) and JDWP client is not interested
+            //    in it, in this case stepping/stepping over/stepping out shall be resumed
+            // 3. class load event happened but commanded to be ignored for this class (but thread is stopped)
+            if (stoppedThread != null) {
+                if (stoppedThread.suspendCount() == 0)
+                    restepBeforeResume(stoppedThread);
+                // resume thread in target
                 delegates.threads().onThreadSuspended(stoppedThread, stoppedThreadCallStack, false);
+            }
         } else {
             if (stoppedThread != null) {
                 delegates.threads().onThreadSuspended(stoppedThread, stoppedThreadCallStack, true);
@@ -632,13 +643,16 @@ public class JdwpEventCenterDelegate implements IJdwpEventDelegate {
         // get corresponding thread object
         VmThread thread = delegates.state().referenceRefIdHolder().instanceByAddr(event.threadObj());
         if (event.eventId() == HookConsts.events.THREAD_ATTACHED || event.eventId() == HookConsts.events.THREAD_STARTED) {
-            if (thread != null)
-                throw new DebuggerException("Thread " + Long.toHexString(event.threadObj()) + " already attached/started!");
+            if (thread != null) {
+                if (thread.threadPtr() != 0)
+                    throw new DebuggerException("Thread " + Long.toHexString(event.threadObj()) + " already attached/started!");
+                // thread object was resolved before it was started, just attach thread
+                thread.attach(event.thread());
+            } else {
+                thread = delegates.instances().instanceByPointer(event.threadObj(), event.thread(), true);
+            }
 
-            // attach thread
-            thread = delegates.instances().instanceByPointer(event.threadObj(), event.thread(), true);
             delegates.state().threads().add(thread);
-
             log.debug("THREAD_STARTED: " + thread);
 
             return new JdwpEventData(JdwpConsts.EventKind.THREAD_START, thread);
@@ -700,7 +714,7 @@ public class JdwpEventCenterDelegate implements IJdwpEventDelegate {
         if (result.size() == 0)
             log.error(HookConsts.commandToString(eventId) + ": Empty callstack!");
 
-        return result.toArray(new VmStackTrace[result.size()]);
+        return result.toArray(new VmStackTrace[0]);
     }
 
     private VmStackTrace convertStackTrace(int eventId, HooksCallStackEntry payload) {
@@ -729,6 +743,10 @@ public class JdwpEventCenterDelegate implements IJdwpEventDelegate {
             return null;
         }
 
+        // skip synthetic methods from being visible to debugger
+        if (methodInfo.isBridge() || methodInfo.isBroCallback() || methodInfo.isBroBridge())
+            return null;
+
         return new VmStackTrace(classInfo, methodInfo, payload.lineNumber(), payload.fp(), payload.pc() - payload.impl());
     }
 
@@ -742,5 +760,17 @@ public class JdwpEventCenterDelegate implements IJdwpEventDelegate {
 
     private int allocateJdwpEventRequestId() {
         return jdwpEventRequestCounter++;
+    }
+
+    /**
+     * thread about to be resumed. Hook server cancels all stepping. resume stepping if
+     * there is active one
+     */
+    public void restepBeforeResume(VmThread thread) {
+        if (activeStepRequest != null && !((JdwpEventRequest) activeStepRequest.payload()).isCanceled() &&
+                activeStepRequest.thread().refId() == thread.refId()) {
+            // step again
+            delegates.runtime().restep(activeStepRequest);
+        }
     }
 }

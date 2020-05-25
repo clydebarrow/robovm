@@ -50,15 +50,13 @@ public class ThreadDelegate implements IJdwpThreadDelegate {
         int suspendCount = thread.markSuspended();
         if (suspendCount == 1) {
             delegates.hooksApi().threadSuspend(thread.threadPtr());
-            thread.setStatus(VmThread.Status.SUPENDED);
+            thread.setStatus(VmThread.Status.SUSPENDED);
         }
     }
 
     @Override
     public void jdwpResumeThread(long threadId) throws DebuggerException {
         VmThread thread = getThread(threadId);
-        if (thread == null)
-            throw new DebuggerException(JdwpConsts.Error.INVALID_THREAD);
         resumeThread(thread);
     }
 
@@ -67,6 +65,9 @@ public class ThreadDelegate implements IJdwpThreadDelegate {
         int suspendCount = thread.suspendCount();
         thread.markResumed();
         if (suspendCount == 1) {
+            // before resume try resume stepping if it was active
+            delegates.events().restepBeforeResume(thread);
+
             delegates.hooksApi().threadResume(thread.threadPtr());
             thread.setStatus(VmThread.Status.RUNNING);
             setThreadStack(thread, null);
@@ -103,7 +104,7 @@ public class ThreadDelegate implements IJdwpThreadDelegate {
         if (keepSuspended) {
             setThreadStack(thread, stack);
             thread.markSuspended();
-            thread.setStatus(VmThread.Status.SUPENDED);
+            thread.setStatus(VmThread.Status.SUSPENDED);
         } else {
             if (thread.suspendCount() == 0) {
                 // thread is not suspended and this event is filtered out, so resume thread
@@ -166,7 +167,7 @@ public class ThreadDelegate implements IJdwpThreadDelegate {
      */
     public VmThread anySuspendedThread() {
         for (VmThread thread : delegates.state().threads()) {
-            if (thread.status() == VmThread.Status.SUPENDED)
+            if (thread.status() == VmThread.Status.SUSPENDED)
                 return thread;
         }
         return null;

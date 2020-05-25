@@ -63,7 +63,8 @@ import org.robovm.compiler.llvm.Value;
 import org.robovm.compiler.llvm.Variable;
 import org.robovm.compiler.llvm.VariableRef;
 import org.robovm.compiler.plugin.CompilerPlugin;
-import org.robovm.compiler.plugin.debug.DebuggerDebugObjectFileInfo;
+import org.robovm.debugger.debuginfo.DebuggerDebugObjectFileInfo;
+import org.robovm.compiler.plugin.objc.ObjCMemberPlugin;
 import org.robovm.compiler.trampoline.Checkcast;
 import org.robovm.compiler.trampoline.Instanceof;
 import org.robovm.compiler.trampoline.Invoke;
@@ -115,6 +116,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -224,7 +226,8 @@ public class ClassCompiler {
     private final GlobalValueMethodCompiler globalValueMethodCompiler;
     private final AttributesEncoder attributesEncoder;
     private final TrampolineCompiler trampolineResolver;
-    
+    private final ObjCMemberPlugin.MethodCompiler objcMethodCompiler;
+
     private final ByteArrayOutputStream output = new ByteArrayOutputStream(256 * 1024);
     
     public ClassCompiler(Config config) {
@@ -237,6 +240,7 @@ public class ClassCompiler {
         this.globalValueMethodCompiler = new GlobalValueMethodCompiler(config);
         this.attributesEncoder = new AttributesEncoder();
         this.trampolineResolver = new TrampolineCompiler(config);
+        this.objcMethodCompiler = new ObjCMemberPlugin.MethodCompiler(config);
     }
     
     public boolean mustCompile(Clazz clazz) {
@@ -491,7 +495,7 @@ public class ClassCompiler {
 
     private static void createObjectFileFromData(Config config, Context context, TargetMachine targetMachine, ModuleBuilder mb,
                                                  String dataName, File llFile, File oFile) throws IOException, InterruptedException {
-        byte[] data = mb.build().toString().getBytes("UTF-8");
+        byte[] data = mb.build().toString().getBytes(StandardCharsets.UTF_8);
         if (llFile != null) {
             llFile.getParentFile().mkdirs();
             FileUtils.writeByteArrayToFile(llFile, data);
@@ -596,6 +600,10 @@ public class ClassCompiler {
             }
         }
 
+        // emit bitcode section for line number object file
+        if (linesMb != null)
+            emitBitcodeSection(config, linesMb);
+
         return linesMb;
     }
 
@@ -611,49 +619,16 @@ public class ClassCompiler {
             Global debugInfoSymbolGlobal = new Global(debugInfoSymbol, new ByteArrayConstant(debugDataBytes), true);
             debugInfoMb.addGlobal(debugInfoSymbolGlobal);
 
-            // use a list for used as spfp offset data will go there as well
+            // list to keep weak values (such as debugger ones) to be added to llvm.used
             List<Value> usedGlobalValues = new ArrayList<>();
             usedGlobalValues.add(new ConstantBitcast(debugInfoSymbolGlobal.ref(), Type.I8_PTR));
-
-            // add reference to spFpOfsset symbols to llvm.used otherwise linker will remove them
-            if (config.getTarget().getArch().isArm()) {
-                List<Value> spfpGlobals = new ArrayList<>();
-
-                // cant get this information during debugger run as linker removes this information
-                // other option would be to add it to llvm.used field in patch but this is longer way than analize it
-                // during compile path
-                String prefix = "_[J]";
-                String suffix = ".spfpoffset";
-                for (Symbol symbol : objectFile.getSymbols()) {
-                    String symbName = symbol.getName();
-                    if (symbol.getSize() <= 0 || !symbName.startsWith(prefix) || !symbName.endsWith(suffix))
-                        continue;
-
-                    // substring to skip '_' as llvm will make it '__' in result
-                    Global spfp = new Global(symbName.substring(1), Type.I32);
-                    // add it as global to ba able reference it
-                    debugInfoMb.addGlobal(spfp);
-
-                    spfpGlobals.add(spfp.ref());
-                }
-
-                if (!spfpGlobals.isEmpty()) {
-                    // create dummy array to keep spfpoffset from being dropped by linker. this array is not going to be
-                    // used directly
-                    ArrayConstant globals = new ArrayConstant(new ArrayType(spfpGlobals.size(), new PointerType(Type.I32)),
-                            spfpGlobals.toArray(new Value[spfpGlobals.size()]));
-                    Global arrGlobal = new Global(clazz.getClassName() + "[spfprefs]", globals, true);
-                    debugInfoMb.addGlobal(arrGlobal);
-                    usedGlobalValues.add(new ConstantBitcast(arrGlobal.ref(), Type.I8_PTR));
-                }
-            }
 
             // also need to add reference to @llvm.used otherwise linker will drop out this data as not used
             // dkimitsa: always add it as array even if there is only one element as llvm.used is array of pointers
             // and debug version of llvm will crash on assertion while validating type
             Global usedGlobal;
             ArrayConstant usedValuesArr = new ArrayConstant(new ArrayType(usedGlobalValues.size(), Type.I8_PTR),
-                    usedGlobalValues.toArray(new Value[usedGlobalValues.size()]));
+                    usedGlobalValues.toArray(new Value[0]));
             usedGlobal = new Global("llvm.used", Linkage.appending, usedValuesArr, false, "llvm.metadata");
             debugInfoMb.addGlobal(usedGlobal);
 
@@ -704,8 +679,8 @@ public class ClassCompiler {
         BufferedReader in = null;
         BufferedWriter out = null;
         try {
-            in = new BufferedReader(new InputStreamReader(inStream, "UTF-8"));
-            out = new BufferedWriter(new OutputStreamWriter(outStream, "UTF-8"));
+            in = new BufferedReader(new InputStreamReader(inStream, StandardCharsets.UTF_8));
+            out = new BufferedWriter(new OutputStreamWriter(outStream, StandardCharsets.UTF_8));
             String line = null;
             String currentFunction = null;
             while ((line = in.readLine()) != null) {
@@ -776,13 +751,6 @@ public class ClassCompiler {
     }
     
     private void compile(Clazz clazz, OutputStream out) throws IOException {
-        javaMethodCompiler.reset(clazz);
-        bridgeMethodCompiler.reset(clazz);
-        callbackMethodCompiler.reset(clazz);
-        nativeMethodCompiler.reset(clazz);
-        structMemberMethodCompiler.reset(clazz);
-        globalValueMethodCompiler.reset(clazz);
-        
         ClazzInfo ci = clazz.resetClazzInfo();
 
         mb = new ModuleBuilder();
@@ -794,7 +762,20 @@ public class ClassCompiler {
         for (CompilerPlugin compilerPlugin : config.getCompilerPlugins()) {
             compilerPlugin.beforeClass(config, clazz, mb);
         }
-        
+
+        // dkimitsa: intentionally moved reset section after compiler plugin beforeClass invocation.
+        // one reason for this is structMemberMethodCompiler. it tries to resolve structure type
+        // and find out all marshallers but some of them (like ObjCBlock ones) are generated only
+        // in beforeClass. so to have all marshallers and generated classes in place, reset section
+        // is moved here. it shall have no affect as these compilers are not used by plugins itself
+        javaMethodCompiler.reset(clazz);
+        bridgeMethodCompiler.reset(clazz);
+        callbackMethodCompiler.reset(clazz);
+        nativeMethodCompiler.reset(clazz);
+        structMemberMethodCompiler.reset(clazz);
+        globalValueMethodCompiler.reset(clazz);
+
+
         sootClass = clazz.getSootClass();
         trampolines = new HashMap<>();
         catches = new HashSet<String>();
@@ -826,6 +807,9 @@ public class ClassCompiler {
             // method that will provide meta flags for runtime to help finding out if stret is required
             SootMethod stretMeta = new SootMethod(STRUCT_ATTRIBUTES_METHOD, Collections.EMPTY_LIST, IntType.v(), Modifier.PUBLIC | Modifier.STATIC | Modifier.NATIVE);
             sootClass.addMethod(stretMeta);
+            // method that returns offset of struct member
+            SootMethod offset = new SootMethod("offsetOf", Collections.singletonList(IntType.v()), IntType.v(), Modifier.PUBLIC | Modifier.STATIC | Modifier.NATIVE);
+            sootClass.addMethod(offset);
         }
         
         mb.addInclude(getClass().getClassLoader().getResource(String.format("header-%s-%s.ll", config.getOs().getFamily(), config.getArch())));
@@ -862,14 +846,22 @@ public class ClassCompiler {
             String name = method.getName();
             Function function = null;
             if (hasBridgeAnnotation(method)) {
-                function = bridgeMethod(method);
+                // javac generates JVM synthetic bridge methods for covariant return
+                // and copies @Bridge annotations as well. Don't try to compile bridge methods
+                // as these are not a subject for RoboVM bridge compiler and it will fail on them
+                if (!isJvmSyntheticBridgeMethod(method))
+                    function = bridgeMethod(method);
+                else
+                    function = method(method);
             } else if (hasGlobalValueAnnotation(method)) {
                 function = globalValueMethod(method);
-            } else if (isStruct(sootClass) && ("_sizeOf".equals(name) 
-                        || "sizeOf".equals(name) || STRUCT_ATTRIBUTES_METHOD.equals(name) || hasStructMemberAnnotation(method))) {
+            } else if (isStruct(sootClass) && ("_sizeOf".equals(name) || "sizeOf".equals(name) ||
+                    "offsetOf".equals(name) || STRUCT_ATTRIBUTES_METHOD.equals(name) || hasStructMemberAnnotation(method))) {
                 function = structMember(method);
             } else if (method.isNative()) {
                 function = nativeMethod(method);
+            } else if (objcMethodCompiler.willCompile(method)) {
+                function = objcPublishMethod(method);
             } else if (!method.isAbstract()) {
                 function = method(method);
             }
@@ -993,8 +985,11 @@ public class ClassCompiler {
         for (CompilerPlugin compilerPlugin : config.getCompilerPlugins()) {
             compilerPlugin.afterClass(config, clazz, mb);
         }
-        
-        OutputStreamWriter writer = new OutputStreamWriter(out, "UTF-8");
+
+        // emit bitcode section for class
+        emitBitcodeSection(config, mb);
+
+        OutputStreamWriter writer = new OutputStreamWriter(out, StandardCharsets.UTF_8);
         mb.build().write(writer);
         writer.flush();
 
@@ -1032,6 +1027,27 @@ public class ClassCompiler {
             }
         }
         clazz.saveClazzInfo();
+    }
+
+    /**
+     * adds `__LLVM,__asm` section to module builder to mark it as object without bitcode build from assembly.
+     */
+    static void emitBitcodeSection(Config config, ModuleBuilder mb) {
+        // for release build add bitcode section
+        if (mb != null && config.shouldEmitBitcode()) {
+            // can't just add section, adding zero constants to create one
+            mb.addGlobal(new Global("robovm.bitcode", Linkage.appending, new IntegerConstant(0), true, "__LLVM,__asm"));
+        }
+    }
+
+    private boolean isJvmSyntheticBridgeMethod(SootMethod method) {
+        final int BRIDGE = 0x00000040;
+        final int SYNTHETIC = 0x00001000;
+
+        return !method.isAbstract() &&
+                !method.isNative() &&
+                (method.getModifiers() & BRIDGE) == BRIDGE &&
+                (method.getModifiers() & SYNTHETIC) == SYNTHETIC;
     }
 
     private static void addClassDependencyIfNeeded(Clazz clazz, soot.Type type, boolean weak) {
@@ -1416,7 +1432,7 @@ public class ClassCompiler {
             if (attributesEncoder.methodHasAttributes(m)) {
                 flags |= MI_ATTRIBUTES;
             }
-            if (hasBridgeAnnotation(m) || hasGlobalValueAnnotation(m)) {
+            if ((hasBridgeAnnotation(m) && !isJvmSyntheticBridgeMethod(m)) || hasGlobalValueAnnotation(m)) {
                 flags |= MI_BRO_BRIDGE;
             }
             if (hasCallbackAnnotation(m)) {
@@ -1489,7 +1505,7 @@ public class ClassCompiler {
                     body.add(linetableGlobal.ref());
                 }
             }
-            if (hasBridgeAnnotation(m)) {
+            if (hasBridgeAnnotation(m) && !isJvmSyntheticBridgeMethod(m)) {
                 if (!readBooleanElem(getAnnotation(m, BRIDGE), "dynamic", false)) {
                     body.add(new GlobalRef(Symbols.bridgePtrSymbol(m), I8_PTR));
                 } else {
@@ -1541,6 +1557,10 @@ public class ClassCompiler {
 
     private Function globalValueMethod(SootMethod method) {
         return compileMethod(globalValueMethodCompiler, method);
+    }
+
+    private Function objcPublishMethod(SootMethod method) {
+        return compileMethod(objcMethodCompiler, method);
     }
 
     private Function method(SootMethod method) {

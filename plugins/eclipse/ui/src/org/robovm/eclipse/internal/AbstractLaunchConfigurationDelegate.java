@@ -120,7 +120,6 @@ public abstract class AbstractLaunchConfigurationDelegate extends AbstractJavaLa
             String[] bootclasspath = getBootpath(configuration);
             IJavaProject javaProject = getJavaProject(configuration);
             int debuggerPort = findFreePort();
-            boolean hasDebugPlugin = false;
 
             if (monitor.isCanceled()) {
                 return;
@@ -137,12 +136,7 @@ public abstract class AbstractLaunchConfigurationDelegate extends AbstractJavaLa
 
             monitor.subTask("Creating build configuration");
             Config.Builder configBuilder;
-            try {
-                configBuilder = new Config.Builder();
-            } catch (IOException e) {
-                throw new CoreException(new Status(IStatus.ERROR, RoboVMPlugin.PLUGIN_ID,
-                        "Launch failed. Check the RoboVM console for more information.", e));
-            }
+            configBuilder = new Config.Builder();
             configBuilder.logger(RoboVMPlugin.getConsoleLogger());
 
             File projectRoot = getJavaProject(configuration).getProject().getLocation().toFile();
@@ -173,13 +167,6 @@ public abstract class AbstractLaunchConfigurationDelegate extends AbstractJavaLa
                 configBuilder.addPluginArgument("debug:logdir=" + logDir.getAbsolutePath());
                 configBuilder.addPluginArgument("debug:clientmode=false");
                 configBuilder.addPluginArgument("debug:logconsole=true");
-                
-                // check if we have the debug plugin
-                for (Plugin plugin : configBuilder.getPlugins()) {
-                    if ("DebuggerLaunchPlugin".equals(plugin.getClass().getSimpleName())) {
-                        hasDebugPlugin = true;
-                    }
-                }
             }
 
             if (bootclasspath != null) {
@@ -279,7 +266,7 @@ public abstract class AbstractLaunchConfigurationDelegate extends AbstractJavaLa
                 IProcess iProcess = DebugPlugin.newProcess(launch, process, label);
                 
                 // setup the debugger
-                if (ILaunchManager.DEBUG_MODE.equals(mode) && hasDebugPlugin) {
+                if (ILaunchManager.DEBUG_MODE.equals(mode)) {
                     VirtualMachine vm = attachToVm(monitor, debuggerPort);
                     // we were canceled
                     if (vm == null) {

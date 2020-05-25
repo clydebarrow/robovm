@@ -23,7 +23,7 @@ import org.robovm.compiler.clazz.Clazz;
 import org.robovm.compiler.config.Config;
 import org.robovm.compiler.config.OS;
 import org.robovm.compiler.llvm.Alloca;
-import org.robovm.compiler.llvm.ArrayType;
+import org.robovm.compiler.llvm.ArrayConstantBuilder;
 import org.robovm.compiler.llvm.BasicBlock;
 import org.robovm.compiler.llvm.Call;
 import org.robovm.compiler.llvm.Constant;
@@ -33,7 +33,6 @@ import org.robovm.compiler.llvm.FunctionDeclaration;
 import org.robovm.compiler.llvm.Global;
 import org.robovm.compiler.llvm.Instruction;
 import org.robovm.compiler.llvm.IntegerConstant;
-import org.robovm.compiler.llvm.Linkage;
 import org.robovm.compiler.llvm.MetadataString;
 import org.robovm.compiler.llvm.MetadataValue;
 import org.robovm.compiler.llvm.PointerType;
@@ -41,7 +40,6 @@ import org.robovm.compiler.llvm.Type;
 import org.robovm.compiler.llvm.Value;
 import org.robovm.compiler.llvm.Variable;
 import org.robovm.compiler.llvm.VariableRef;
-import org.robovm.compiler.llvm.ZeroInitializer;
 import org.robovm.compiler.llvm.debug.dwarf.DIBaseItem;
 import org.robovm.compiler.llvm.debug.dwarf.DICompileUnit;
 import org.robovm.compiler.llvm.debug.dwarf.DICompositeType;
@@ -56,8 +54,13 @@ import org.robovm.compiler.llvm.debug.dwarf.DwarfConst;
 import org.robovm.compiler.plugin.AbstractCompilerPlugin;
 import org.robovm.compiler.plugin.PluginArguments;
 import org.robovm.compiler.plugin.debug.kotlin.KotlinTools;
+import org.robovm.debugger.debuginfo.DebuggerDebugAllocaInfo;
+import org.robovm.debugger.debuginfo.DebuggerDebugMethodInfo;
+import org.robovm.debugger.debuginfo.DebuggerDebugObjectFileInfo;
+import org.robovm.debugger.debuginfo.DebuggerDebugVariableInfo;
 import org.robovm.llvm.LineInfo;
 import org.robovm.llvm.ObjectFile;
+import org.robovm.llvm.SectionIterator;
 import org.robovm.llvm.Symbol;
 import org.robovm.llvm.debuginfo.DwarfDebugMethodInfo;
 import org.robovm.llvm.debuginfo.DwarfDebugObjectFileInfo;
@@ -96,6 +99,23 @@ public class DebugInformationPlugin extends AbstractCompilerPlugin {
 
     public DebugInformationPlugin() {
 	}
+
+    @Override
+    public void beforeConfig(Config.Builder builder, Config config) {
+        if (config.isDebug()) {
+            // debugger depends on amount of symbols.
+            // as strip removes all local symbols all dependencies need to be converted
+            // into exported ones, adding wildcards
+            // nb: linker doesn't support espaping in wildcards
+            // so "[[]" works actually as "\["
+            builder.addExportedSymbol("*[[]debuginfo]");
+            builder.addExportedSymbol("*[[]bptable]");
+            builder.addExportedSymbol("prim_*");
+            builder.addExportedSymbol("_bcBootClassesHash");
+            builder.addExportedSymbol("_bcClassesHash");
+            builder.addExportedSymbol("robovmBaseSymbol");
+        }
+    }
 
     public PluginArguments getArguments() {
     	return new PluginArguments("debug", Collections.emptyList());
@@ -236,6 +256,7 @@ public class DebugInformationPlugin extends AbstractCompilerPlugin {
         for (BasicBlock bb : function.getBasicBlocks()) {
             for (Instruction instruction : bb.getInstructions()) {
                 int lineNumber = -1;
+                int unmappedLineNumber = -1;
                 int columnAsDebugInfoIdx = 0;
 
                 List<Object> units = instruction.getAttachments();
@@ -246,7 +267,8 @@ public class DebugInformationPlugin extends AbstractCompilerPlugin {
                     LineNumberTag tag = (LineNumberTag) unit.getTag("LineNumberTag");
                     if (tag != null) {
                         // map line number to another one (required for kotlin)
-                        lineNumber = lineNumberMapper.map(tag.getLineNumber());
+                        unmappedLineNumber = tag.getLineNumber();
+                        lineNumber = lineNumberMapper.map(unmappedLineNumber);
                         methodLineNumber = Math.min(methodLineNumber, lineNumber);
                         methodEndLineNumber = Math.max(methodEndLineNumber, lineNumber);
                     }
@@ -265,14 +287,18 @@ public class DebugInformationPlugin extends AbstractCompilerPlugin {
                     unitToInstruction.put(unit, instruction);
                 }
 
-
                 if (lineNumber != -1) {
                     // there is line number for instruction
                     // also set debug information index as column
                     instruction.addMetadata((new DILineNumber(lineNumber, columnAsDebugInfoIdx, diSubprogram)).get());
 
                     // save for debugger needs
-                    instructionToLineNo.put(instruction, lineNumber);
+                    // saving unmapped line number as after kotlin SMAP mapping
+                    // several blocks of code will have same line number
+                    // debugger logic bellow will assign instrumented hook only to first instruction
+                    // from all that shares same line number.
+                    // as result kotlin collections and lambdas will be not available for stepping
+                    instructionToLineNo.put(instruction, unmappedLineNumber);
                     if (columnAsDebugInfoIdx != 0)
                         instructionToDebugInfoIdx.put(instruction, columnAsDebugInfoIdx);
                 }
@@ -330,24 +356,43 @@ public class DebugInformationPlugin extends AbstractCompilerPlugin {
                 if (!startInstrumenting && firstHooksInst != instruction)
                     continue;
                 startInstrumenting = true;
-                Integer lineNo = instructionToLineNo.get(instruction);
-                if (lineNo == null || hookInstructionLines.containsKey(lineNo))
+                Integer unmappedLineNo = instructionToLineNo.get(instruction);
+                if (unmappedLineNo == null || hookInstructionLines.containsKey(unmappedLineNo))
                     continue;
-                hookInstructionLines.put(lineNo, instruction);
+                hookInstructionLines.put(unmappedLineNo, instruction);
             }
+        }
+
+        if (hookInstructionLines.isEmpty()) {
+            // there was no hook instructions identified, no need to bpTable, debug info and locals information
+            return;
         }
 
         // instrument hooks call, there is known line range, create global for method breakpoints
         int arraySize = ((methodEndLineNumber - methodLineNumber + 1) + 7) / 8;
-        // global value to this array (without values as zeroinit)
-        Global bpTable = new Global(Symbols.bptableSymbol(method), Linkage.internal,
-                new ZeroInitializer(new ArrayType(arraySize, Type.I8)));
+        // use same data to tell debugger what lines are available for break points:
+        // idea is to set all not available (not instrumented) line with bit set to 1
+        // these bits will not be used for hooks as there is no corresponding injection
+        // but debugger will be able to read it and respond to JDWP
+        byte[] bpTableValue = new byte[arraySize];
+        // set all lines as breakpoint armed
+        Arrays.fill(bpTableValue, (byte)0xff);
+        for (Integer unmappedLineNo : hookInstructionLines.keySet()) {
+            // reset armed for valid lines
+            int lineOffset = lineNumberMapper.map(unmappedLineNo) - methodLineNumber;
+            int idx = lineOffset >> 3;
+            int mask = ~(1 << (lineOffset & 7));
+            bpTableValue[idx] &= mask;
+        }
+        // global value to this array
+        Global bpTable = new Global(Symbols.bptableSymbol(method), new ArrayConstantBuilder(Type.I8).add(bpTableValue).build());
         mb.addGlobal(bpTable);
         // cast to byte pointer
         ConstantBitcast bpTableRef = new ConstantBitcast(bpTable.ref(), Type.I8_PTR);
         for (Map.Entry<Integer, Instruction> e : hookInstructionLines.entrySet()) {
             Instruction instr = e.getValue();
-            int lineNo = e.getKey();
+            int unmappedLineNo = e.getKey();
+            int lineNo = lineNumberMapper.map(unmappedLineNo);
             int debugInfoIdx = instructionToDebugInfoIdx.getOrDefault(instr, 0);
 
             injectHookInstrumented(diSubprogram, lineNo, debugInfoIdx, lineNo - methodLineNumber, function, bpTableRef, instr);
@@ -470,6 +515,25 @@ public class DebugInformationPlugin extends AbstractCompilerPlugin {
                 .filter(s -> s.getName().startsWith(symbolPrefix + Symbols.EXTERNAL_SYMBOL_PREFIX))
                 .collect(Collectors.toMap(Symbol::getName, e -> e));
 
+        // read text segment to get sp-fp offsets on arm targets
+        byte[] textSegmentContent = null;
+        long textSegmentAddress = 0L;
+        long textSegmentSize = 0L;
+        if (config.getTarget().getArch().isArm()) {
+            // look for __text section
+            for (SectionIterator it = objectFileData.getSectionIterator(); it.hasNext(); it.next()) {
+                if (it.getName().equals("__text")) {
+                    textSegmentSize = it.getSize();
+                    textSegmentAddress = it.getAddress();
+                    if (textSegmentSize > 0L) {
+                        textSegmentContent = new byte[(int) textSegmentSize];
+                        it.copyContents(textSegmentContent);
+                    }
+                    break;
+                }
+            }
+        }
+
         // now it is a task to combine it with data received during compilation
         List<DebuggerDebugMethodInfo.RawData> methods = new ArrayList<>();
         for (MethodDataBundle methodBundle :  classBundle.methods) {
@@ -487,8 +551,23 @@ public class DebugInformationPlugin extends AbstractCompilerPlugin {
             if (lineInfos.size() == 0)
                 continue;
 
+            // if textSegmentContent is present (its arm) read spfpoffset from __text segment
+            int spfpOffset = 0;
+            if (textSegmentContent != null) {
+                Symbol spfp = symbols.get(symbolPrefix + methodBundle.signature + ".spfpoffset");
+                if (spfp != null) {
+                    long offset = spfp.getAddress() - textSegmentAddress;
+                    if (offset >= 0 && offset < textSegmentSize) {
+                        // little endian
+                        spfpOffset = (textSegmentContent[(int) offset] & 0xFF) |
+                                (textSegmentContent[(int) (offset + 1)] & 0xFF) << 8 |
+                                (textSegmentContent[(int) (offset + 2)] & 0xFF) << 16 |
+                                (textSegmentContent[(int) (offset + 3)] & 0xFF) << 24;
+                    }
+                }
+            }
 
-            DebuggerDebugMethodInfo.RawData debuggerMethodInfo = buildDebuggerMethodInfo(config, clazz, symbol, dbgMethodInfo, methodBundle, lineInfos);
+            DebuggerDebugMethodInfo.RawData debuggerMethodInfo = buildDebuggerMethodInfo(config, clazz, symbol, dbgMethodInfo, methodBundle, lineInfos, spfpOffset);
             methods.add(debuggerMethodInfo);
         }
 
@@ -503,8 +582,8 @@ public class DebugInformationPlugin extends AbstractCompilerPlugin {
     }
 
     private DebuggerDebugMethodInfo.RawData buildDebuggerMethodInfo(Config config, Clazz clazz, Symbol symbol,
-                                                                    DwarfDebugMethodInfo dbgMethodInfo, MethodDataBundle methodBundle,
-                                                                    List<LineInfo> lineInfos) {
+                                                            DwarfDebugMethodInfo dbgMethodInfo, MethodDataBundle methodBundle,
+                                                            List<LineInfo> lineInfos, int spfpOffset) {
         // sort line info by address an build
         lineInfos.sort(Comparator.comparingLong(LineInfo::getAddress));
 
@@ -633,8 +712,8 @@ public class DebugInformationPlugin extends AbstractCompilerPlugin {
 
         // convert data to be prepared for saving into DebuggerDebugMethodInfo.RawData
         int[][] rawSlices = slices.values().toArray(new int[0][]);
-        DwarfDebugVariableInfo[] rawAllocas = new DwarfDebugVariableInfo[usedAllocas.size()];
-        usedAllocas.forEach((alloca, idx) -> rawAllocas[idx] = alloca);
+        DebuggerDebugAllocaInfo[] rawAllocas = new DebuggerDebugAllocaInfo[usedAllocas.size()];
+        usedAllocas.forEach((alloca, idx) -> rawAllocas[idx] = new DebuggerDebugAllocaInfo(alloca.register(), alloca.offset()));
         DebuggerDebugVariableInfo[] rawVariables = new DebuggerDebugVariableInfo[usedVariables.size()];
         usedVariables.forEach((variable, idx) -> rawVariables[idx] = variable);
         int[] rawOffsets = new int[offsetToSlice.size()];
@@ -652,7 +731,7 @@ public class DebugInformationPlugin extends AbstractCompilerPlugin {
             methodName = methodName.substring(clazz.getClassName().length() + 4);
         //noinspection UnnecessaryLocalVariable
         DebuggerDebugMethodInfo.RawData mi = new DebuggerDebugMethodInfo.RawData(methodName, methodBundle.startLine, methodBundle.finalLine,
-                rawVariables, rawAllocas, rawOffsets, rawOffsetSliceIndexes, rawSlices);
+                spfpOffset, rawVariables, rawAllocas, rawOffsets, rawOffsetSliceIndexes, rawSlices);
         return mi;
     }
 

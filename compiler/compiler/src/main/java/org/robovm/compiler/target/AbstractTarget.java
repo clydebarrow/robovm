@@ -179,7 +179,9 @@ public abstract class AbstractTarget implements Target {
             for (int i = 0; i < exportedSymbols.size(); i++) {
                 // On Darwin symbols are always prefixed with a '_'. We'll prepend
                 // '_' to each symbol here so the user won't have to.
-                exportedSymbols.set(i, "_" + exportedSymbols.get(i));
+                // (excluding * starting wildcards)
+                String symb = exportedSymbols.get(i);
+                exportedSymbols.set(i, symb.startsWith("*") ? symb : "_" + symb);
             }
 
             if (!config.getUnhideSymbols().isEmpty()) {
@@ -223,6 +225,7 @@ public abstract class AbstractTarget implements Target {
             }
         }
 
+        File swiftLibLocation = null;
         if (!config.getLibs().isEmpty()) {
             objectFiles = new ArrayList<File>(objectFiles);
             for (Config.Lib lib : config.getLibs()) {
@@ -244,6 +247,17 @@ public abstract class AbstractTarget implements Target {
                         if (lib.isForce()) {
                             libs.add("-Wl,--no-whole-archive");
                         }
+                    }
+                } else if (p.startsWith("libswift") && p.endsWith(".dylib") && ! new File(p).exists()) {
+                    // workaround:
+                    // if project links against static swift library it requires
+                    // dynamic swift libraries to be included. and these are not automatically
+                    // resolved yet, allow user to specify them in library list
+                    // link via -l by removing prefix "lib" and sufix ".dylib"
+                    libs.add("-l" + p.substring(3, p.length() - 6));
+                    if (swiftLibLocation == null) {
+                        swiftLibLocation = getSwiftDir(config);
+                        ccArgs.add("-L" + swiftLibLocation.getAbsolutePath());
                     }
                 } else if (p.endsWith(".dylib") || p.endsWith(".so")) {
                     libs.add(new File(p).getAbsolutePath());
@@ -359,11 +373,12 @@ public abstract class AbstractTarget implements Target {
                                 copyFile(resource, file, destDir);
 
                                 if (isDynamicLibrary(file)) {
-                                    // remove simulator and deprecated archs, also strip bitcode if any
+                                    // remove simulator and deprecated archs, also strip bitcode if not used
                                     if (config.getOs() == OS.ios && config.getArch().isArm()) {
                                         File libFile = new File(destDir, file.getName());
                                         stripExtraArches(libFile);
-                                        stripBitcode(libFile);
+                                        if (!config.isEnableBitcode())
+                                            stripBitcode(libFile);
                                     }
 
                                     // check if this dylib depends on Swift
@@ -382,6 +397,17 @@ public abstract class AbstractTarget implements Target {
 
                     }, frameworksDir);
                 }
+            }
+        }
+
+        // workaround: check if libs contain reference to swift lib
+        // if project links against static swift library it requires
+        // dynamic swift libraries to be included. and these are not automatically
+        // resolved yet, allow user to specify them in library list
+        for (Config.Lib lib : config.getLibs()) {
+            String p = lib.getValue();
+            if (p.startsWith("libswift") && p.endsWith(".dylib") && !new File(p).exists()) {
+                swiftLibraries.add(p);
             }
         }
 
@@ -420,11 +446,12 @@ public abstract class AbstractTarget implements Target {
                     copyFile(resource, file, destDir);
 
                     if (config.getOs() == OS.ios && config.getArch().isArm()) {
-                        // remove simulator and deprecated archs, also strip bitcode if any
+                        // remove simulator and deprecated archs, also strip bitcode if not used
                         if (isAppExtension(file)) {
                             File libFile = new File(destDir, file.getName());
                             stripExtraArches(libFile);
-                            stripBitcode(libFile);
+                            if (!config.isEnableBitcode())
+                                stripBitcode(libFile);
                         }
                     }
                 }
@@ -451,6 +478,20 @@ public abstract class AbstractTarget implements Target {
         return new File(swiftDir, "libswiftCore.dylib").exists();
     }
 
+    private File getSwiftDir(Config config) throws IOException {
+        String system;
+        if (config.getOs() == OS.ios) {
+            if (config.getArch().isArm()) {
+                system = "iphoneos";
+            } else {
+                system = "iphonesimulator";
+            }
+        } else {
+            system = "mac";
+        }
+        return getSwiftDir(system);
+    }
+
     private File getSwiftDir(String system) throws IOException {
         // FIXME: dkimitsa: its a temporal for finding location of swift libraries
         // FIXME: as in XCode 11 these are not under swift subdir anymore (but in swift-5.0).
@@ -468,17 +509,7 @@ public abstract class AbstractTarget implements Target {
     }
 
 	protected void copySwiftLibs(Collection<String> swiftLibraries, File targetDir, boolean strip) throws IOException {
-		String system = null;
-		if (config.getOs() == OS.ios) {
-			if (config.getArch().isArm()) {
-				system = "iphoneos";
-			} else {
-				system = "iphonesimulator";
-			}
-		} else {
-			system = "mac";
-		}
-		File swiftDir = getSwiftDir(system);
+		File swiftDir = getSwiftDir(config);
 
 		// dkimitsa: there is hidden dependencies possible between swift libraries.
 		// e.g. one swiftLib has dependency that is not listed in included framework
@@ -510,11 +541,12 @@ public abstract class AbstractTarget implements Target {
 
 			// don't strip if libraries goes to SwiftSupport folder
 			if (strip) {
-                // remove simulator and deprecated archs, also strip bitcode if any
+                // remove simulator and deprecated archs, also strip bitcode if not used
                 if (config.getOs() == OS.ios && config.getArch().isArm()) {
                     File libFile = new File(targetDir, swiftLibrary.getName());
                     stripExtraArches(libFile);
-                    stripBitcode(libFile);
+                    if (!config.isEnableBitcode())
+                        stripBitcode(libFile);
                 }
             }
         }

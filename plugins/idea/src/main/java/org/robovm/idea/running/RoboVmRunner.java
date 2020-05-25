@@ -16,9 +16,6 @@
  */
 package org.robovm.idea.running;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import com.intellij.debugger.DebugEnvironment;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.DefaultDebugUIEnvironment;
@@ -32,6 +29,7 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.GenericProgramRunner;
 import com.intellij.execution.runners.RunContentBuilder;
@@ -41,8 +39,10 @@ import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class RoboVmRunner extends GenericProgramRunner {
+public class RoboVmRunner extends GenericProgramRunner<RunnerSettings> {
 
     public static final String DEBUG_EXECUTOR = "Debug";
     public static final String RUN_EXECUTOR = "Run";
@@ -59,10 +59,10 @@ public class RoboVmRunner extends GenericProgramRunner {
     }
 
     @Override
-    protected void execute(@NotNull ExecutionEnvironment environment, @Nullable Callback callback, @NotNull RunProfileState state) throws ExecutionException {
+    protected void execute(@NotNull ExecutionEnvironment environment, @Nullable Callback callback, @NotNull RunProfileState state) {
         // we need to pass the run profile info to the compiler so
         // we can decide if this is a debug or release build
-        RoboVmRunConfiguration runConfig = (RoboVmRunConfiguration)environment.getRunnerAndConfigurationSettings().getConfiguration();
+        RoboVmRunConfiguration runConfig = (RoboVmRunConfiguration)environment.getRunProfile();
         runConfig.setDebug(DEBUG_EXECUTOR.equals(environment.getExecutor().getId()));
         super.execute(environment, callback, state);
     }
@@ -88,7 +88,7 @@ public class RoboVmRunner extends GenericProgramRunner {
     protected RunContentDescriptor attachVirtualMachine(RunProfileState state,
                                                         @NotNull ExecutionEnvironment env,
                                                         RemoteConnection connection,
-                                                        boolean pollConnection) throws ExecutionException {
+                                                        @SuppressWarnings("SameParameterValue") boolean pollConnection) throws ExecutionException {
         DebugEnvironment environment = new DefaultDebugUIEnvironment(env, state, connection, pollConnection).getEnvironment();
         final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(env.getProject()).attachVirtualMachine(environment);
         if (debuggerSession == null) {
@@ -113,7 +113,6 @@ public class RoboVmRunner extends GenericProgramRunner {
                 sessionImpl.addExtraActions(executionResult.getActions());
                 if (executionResult instanceof DefaultExecutionResult) {
                     sessionImpl.addRestartActions(((DefaultExecutionResult)executionResult).getRestartActions());
-                    sessionImpl.addExtraStopActions(((DefaultExecutionResult)executionResult).getAdditionalStopActions());
                 }
                 return JavaDebugProcess.create(session, debuggerSession);
             }
