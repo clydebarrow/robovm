@@ -58,12 +58,12 @@ import org.robovm.apple.dispatch.*;
      * @since Available in iOS 13.0 and later.
      */
     @Method(selector = "tagReaderSessionDidBecomeActive:")
-    void tagReaderSessionDidBecomeActive(NFCTagReaderSession session);
+    void didBecomeActive(NFCTagReaderSession session);
     /**
      * @since Available in iOS 13.0 and later.
      */
     @Method(selector = "tagReaderSession:didDetectTags:")
-    void didDetectTags(NFCTagReaderSession session, NSArray<?> tags);
+    void didDetectTags(NFCTagReaderSession session, @org.robovm.rt.bro.annotation.Marshaler(NFCTag.AsListMarshaller.class) List<NFCTag> tags);
     /*</methods>*/
     /*<adapter>*/
     /*</adapter>*/
