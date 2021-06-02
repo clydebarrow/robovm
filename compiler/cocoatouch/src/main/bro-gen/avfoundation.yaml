@@ -1,5 +1,16 @@
 package: org.robovm.apple.avfoundation
-include: [foundation.yaml, corefoundation.yaml, dispatch.yaml, coreanimation.yaml, coreimage.yaml, coregraphics.yaml, coreaudio.yaml, coremedia.yaml, corevideo.yaml, mediatoolbox.yaml, audiotoolbox.yaml, ]
+include:
+    - foundation
+    - corefoundation
+    - dispatch
+    - coreanimation
+    - coreimage
+    - coregraphics
+    - coreaudio
+    - coremedia
+    - corevideo
+    - mediatoolbox
+    - audiotoolbox
 library: AVFoundation
 framework: AVFoundation
 internal_frameworks: [AVFAudio]
@@ -10,15 +21,12 @@ headers:
     - /System/Library/Frameworks/AVFoundation.framework/Headers/AVBase.h
     - /System/Library/Frameworks/AVFoundation.framework/Headers/AVFAudio.h
 typedefs:
-    'void (^)(CMSampleBufferRef, NSError *)': '@Block VoidBlock2<CMSampleBuffer, NSError>'
-    'void (^)(CMTime)': '@Block VoidBlock1<CMTime>'
-    'void (^)(BOOL, NSError *)': '@Block VoidBlock2<Boolean, NSError>'
-    'void (^)(CMSampleBufferRef, AVCaptureBracketedStillImageSettings *, NSError *)': '@Block VoidBlock3<CMSampleBuffer, AVCaptureBracketedStillImageSettings, NSError>'
 private_typedefs:
     CGImagePropertyOrientation: org.robovm.apple.imageio.CGImagePropertyOrientation
     # following can't be used as Enum from CoreMedia. As it defines only invalid state
     # and will fail on any valid track id
     CMPersistentTrackID: int
+    UTType *: org.robovm.apple.uniformtypeid.UTType
 enums:
     AVAssetReferenceRestrictions: {}
     AVAssetExportSessionStatus: {}
@@ -95,6 +103,16 @@ enums:
     AVSpeechSynthesisVoiceGender: {} #since 13.0
     AVCapturePhotoQualityPrioritization: {} #since 13.0
     AVMovieWritingOptions: {prefix: AVMovieWriting} #since 13.0
+    # ios14
+    AVAudioStereoOrientation: {}
+    AVAssetSegmentType: { } #since 14.0
+    AVAudioSpatializationFormats: { prefix: AVAudioSpatializationFormat }
+    # ios 14.5
+    AVVariantPreferences: {prefix: AVVariantPreference} #since 14.5
+    AVPlayerInterstitialEventRestrictions: {prefix: AVPlayerInterstitialEventRestriction} #since 14.5
+    AVCaptureCenterStageControlMode: {} #since 14.5
+    AVAudioSessionInterruptionReason: {}
+
 typed_enums:
     AVAssetDownloadedAssetEvictionPriority:
         enum: AVAssetDownloadedAssetEvictionPriority
@@ -491,6 +509,8 @@ classes:
             '-initWithURL:fileType:error:':
                 name: init
                 throws: NSErrorException
+            '-initWithContentType:':
+                name: init
             '-canApplyOutputSettings:forMediaType:':
                 trim_after_first_colon: true
                 visibility: protected # can be either AVAudioSettings or AVVideoSettings
@@ -1027,6 +1047,14 @@ classes:
                 throws: NSErrorException
             '-setAllowHapticsAndSystemSoundsDuringRecording:error:':
                 name: setAllowHapticsAndSystemSoundsDuringRecording
+                throws: NSErrorException
+            '-setPreferredInputOrientation:error:':
+                name: setPreferredInputOrientation
+                throws: NSErrorException
+            '-setRate:time:atHostTime:':
+                name: setRate
+            '-setPrefersNoInterruptionsFromSystemAlerts:error:':
+                name: setPrefersNoInterruptionsFromSystemAlerts
                 throws: NSErrorException
     AVAudioSessionChannelDescription: {} # DONE
     AVAudioSessionDataSourceDescription: # DONE
@@ -2585,6 +2613,8 @@ classes:
         methods:
             '-setRate:time:':
                 trim_after_first_colon: true
+            '-setRate:time:atHostTime:':
+                trim_after_first_colon: true
             '-removeRenderer:atTime:completionHandler:':
                 trim_after_first_colon: true
             '-addPeriodicTimeObserverForInterval:queue:usingBlock:':
@@ -2709,7 +2739,44 @@ classes:
     AVMetadataDogBodyObject: {} #since 13.0
     AVMetadataHumanBodyObject: {} #since 13.0
     AVMetadataSalientObject: {} #since 13.0
-
+    AVAssetSegmentReport: {} #since 14.0
+    AVAssetSegmentReportSampleInformation: {} #since 14.0
+    AVAssetSegmentTrackReport: {} #since 14.0
+    AVContentKey: {} #since 14.5
+    AVContentKeySpecifier: #since 14.5
+        methods:
+            '-initForKeySystem:identifier:options:':
+                name: init
+            '+contentKeySpecifierForKeySystem:identifier:options:':
+                exclude: true
+    AVPlayerInterstitialEvent: #since 14.5
+        methods:
+            '+interstitialEventWithPrimaryItem:time:templateItems:restrictions:resumptionOffset:':
+                name: create
+                constructor: true
+            '+interstitialEventWithPrimaryItem:date:templateItems:restrictions:resumptionOffset:':
+                name: create
+                constructor: true
+            '+playerInterstitialEventWithPrimaryItem:time:interstitialTemplateItems:restrictions:resumptionOffset:':
+                exclude: true // COMPATIBILITY SHIM - 72562501
+            '+playerInterstitialEventWithPrimaryItem:date:interstitialTemplateItems:restrictions:resumptionOffset:':
+                exclude: true // COMPATIBILITY SHIM - 72562501
+    AVPlayerInterstitialEventController: #since 14.5
+        methods:
+            '-cancelCurrentEventWithResumptionOffset:':
+                name: cancelCurrentEvent
+            '+interstitialEventControllerWithPrimaryPlayer:':
+                exclude: true
+            '+playerInterstitialEventControllerWithPrimaryPlayer:':
+                exclude: true
+    AVPlayerInterstitialEventObserver: #since 14.5
+        methods:
+            '-initWithPrimaryPlayer:':
+                name: init
+            '+interstitialEventObserverWithPrimaryPlayer:':
+                exclude: true
+            '+playerInterstitialEventObserverWithPrimaryPlayer:':
+                exclude: true
 protocols:
     AVCapturePhotoCaptureDelegate:
         methods:
@@ -2734,6 +2801,9 @@ protocols:
 
     AVContentKeyRecipient:
         skip_adapter: true
+        methods:
+            '-contentKeySession:didProvideContentKey:':
+                name: didProvideContentKey
 
     AVContentKeySessionDelegate:
         methods:
@@ -2965,11 +3035,22 @@ protocols:
                 name: replacementEmbeddedThumbnailPixelBuffer
             '-replacementSemanticSegmentationMatteOfType:forPhoto:':
                 name: replacementSemanticSegmentationMatteOfType
-
+            '-replacementAppleProRAWCompressionSettingsForPhoto:defaultSettings:maximumBitDepth:':
+                name: replacementAppleProRAWCompressionSettingsForPhoto
+    AVAssetWriterDelegate: #since 14.0
+        methods:
+            '-assetWriter:didOutputSegmentData:segmentType:segmentReport:':
+                name: didOutputSegmentData
+            '-assetWriter:didOutputSegmentData:segmentType:':
+                name: didOutputSegmentData
 functions:
     AVMake(RectWithAspectRatioInsideRect):
         class: AVFoundation
         name: 'create#{g[0]}'
+    AVSampleBufferAttachContentKey:
+        class: AVContentKey
+        name: attachToSampleBuffer
+        throws: NSErrorException
 
     # Make sure we don't miss any functions if new ones are introduced in a later version
     (k?AV.*):

@@ -71,6 +71,13 @@ import org.robovm.apple.metal.*;
     public native float getEpsilon();
     @Property(selector = "delta")
     public native float getDelta();
+    /**
+     * @since Available in iOS 14.0 and later.
+     */
+    @Property(selector = "reduceAcrossBatch")
+    public native boolean isReduceAcrossBatch();
+    @Property(selector = "supportsSecureCoding")
+    public static native boolean supportsSecureCoding();
     /*</properties>*/
     /*<members>*//*</members>*/
     /*<methods>*/

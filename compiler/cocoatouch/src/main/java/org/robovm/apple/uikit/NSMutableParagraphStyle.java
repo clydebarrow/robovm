@@ -128,6 +128,20 @@ import org.robovm.apple.linkpresentation.*;
      */
     @Property(selector = "setAllowsDefaultTighteningForTruncation:")
     public native void setAllowsDefaultTighteningForTruncation(boolean v);
+    /**
+     * @since Available in iOS 9.0 and later.
+     */
+    @Property(selector = "lineBreakStrategy")
+    public native NSLineBreakStrategy getLineBreakStrategy();
+    /**
+     * @since Available in iOS 9.0 and later.
+     */
+    @Property(selector = "setLineBreakStrategy:")
+    public native void setLineBreakStrategy(NSLineBreakStrategy v);
+    @Property(selector = "defaultParagraphStyle")
+    public static native NSParagraphStyle getDefaultParagraphStyle();
+    @Property(selector = "supportsSecureCoding")
+    public static native boolean supportsSecureCoding();
     /*</properties>*/
     /*<members>*//*</members>*/
     /*<methods>*/
@@ -146,5 +160,7 @@ import org.robovm.apple.linkpresentation.*;
      */
     @Method(selector = "setParagraphStyle:")
     public native void setParagraphStyle(NSParagraphStyle obj);
+    @Method(selector = "defaultWritingDirectionForLanguage:")
+    public static native NSWritingDirection getDefaultWritingDirection(String languageName);
     /*</methods>*/
 }

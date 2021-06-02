@@ -30,6 +30,7 @@ import org.robovm.rt.bro.ptr.*;
 import org.robovm.apple.foundation.*;
 import org.robovm.apple.avfoundation.*;
 import org.robovm.apple.coregraphics.*;
+import org.robovm.apple.corelocation.*;
 import org.robovm.apple.uikit.*;
 import org.robovm.apple.scenekit.*;
 import org.robovm.apple.corevideo.*;
@@ -38,6 +39,7 @@ import org.robovm.apple.coremedia.*;
 import org.robovm.apple.dispatch.*;
 import org.robovm.apple.metal.*;
 import org.robovm.apple.imageio.*;
+import org.robovm.apple.coreanimation.*;
 /*</imports>*/
 
 /*<javadoc>*/
@@ -51,7 +53,19 @@ public enum /*<name>*/ARErrorCode/*</name>*/ implements NSErrorCode {
     SensorFailed(102L),
     CameraUnauthorized(103L),
     MicrophoneUnauthorized(104L),
+    /**
+     * @since Available in iOS 14.0 and later.
+     */
+    LocationUnauthorized(105L),
     WorldTrackingFailed(200L),
+    /**
+     * @since Available in iOS 14.0 and later.
+     */
+    GeoTrackingNotAvailableAtLocation(201L),
+    /**
+     * @since Available in iOS 14.0 and later.
+     */
+    GeoTrackingFailed(202L),
     /**
      * @since Available in iOS 11.3 and later.
      */
@@ -89,7 +103,11 @@ public enum /*<name>*/ARErrorCode/*</name>*/ implements NSErrorCode {
     /**
      * @since Available in iOS 12.0 and later.
      */
-    FileIOFailed(500L);
+    FileIOFailed(500L),
+    /**
+     * @since Available in iOS 14.0 and later.
+     */
+    RequestFailed(501L);
     /*</values>*/
 
     /*<bind>*/static { Bro.bind(ARErrorCode.class); }/*</bind>*/

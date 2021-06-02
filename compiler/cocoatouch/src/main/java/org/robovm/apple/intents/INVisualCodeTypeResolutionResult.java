@@ -30,6 +30,7 @@ import org.robovm.rt.bro.ptr.*;
 import org.robovm.apple.foundation.*;
 import org.robovm.apple.eventkit.*;
 import org.robovm.apple.corelocation.*;
+import org.robovm.apple.coregraphics.*;
 /*</imports>*/
 
 /*<javadoc>*/
@@ -59,5 +60,11 @@ import org.robovm.apple.corelocation.*;
     public static native INVisualCodeTypeResolutionResult success(INVisualCodeType resolvedVisualCodeType);
     @Method(selector = "confirmationRequiredWithVisualCodeTypeToConfirm:")
     public static native INVisualCodeTypeResolutionResult confirmationRequired(INVisualCodeType visualCodeTypeToConfirm);
+    @Method(selector = "needsValue")
+    public static native INVisualCodeTypeResolutionResult needsValue();
+    @Method(selector = "notRequired")
+    public static native INVisualCodeTypeResolutionResult notRequired();
+    @Method(selector = "unsupported")
+    public static native INVisualCodeTypeResolutionResult unsupported();
     /*</methods>*/
 }

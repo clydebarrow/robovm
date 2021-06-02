@@ -37,6 +37,7 @@ import org.robovm.apple.glkit.*;
 import org.robovm.apple.scenekit.*;
 import org.robovm.apple.gameplaykit.*;
 import org.robovm.apple.metal.*;
+import org.robovm.apple.coreanimation.*;
 /*</imports>*/
 
 /*<javadoc>*/
@@ -189,6 +190,11 @@ import org.robovm.apple.metal.*;
     @Deprecated
     @Property(selector = "preferredFocusedView")
     public native UIView getPreferredFocusedView();
+    /**
+     * @since Available in iOS 14.0 and later.
+     */
+    @Property(selector = "focusGroupIdentifier")
+    public native String getFocusGroupIdentifier();
     /*</properties>*/
     /*<members>*//*</members>*/
     /*<methods>*/

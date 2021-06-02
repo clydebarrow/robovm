@@ -172,6 +172,16 @@ import org.robovm.apple.linkpresentation.*;
     @Property(selector = "setRemembersLastFocusedIndexPath:")
     public native void setRemembersLastFocusedIndexPath(boolean v);
     /**
+     * @since Available in iOS 14.0 and later.
+     */
+    @Property(selector = "selectionFollowsFocus")
+    public native boolean isSelectionFollowsFocus();
+    /**
+     * @since Available in iOS 14.0 and later.
+     */
+    @Property(selector = "setSelectionFollowsFocus:")
+    public native void setSelectionFollowsFocus(boolean v);
+    /**
      * @since Available in iOS 11.0 and later.
      */
     @Property(selector = "hasActiveDrag")
@@ -181,6 +191,39 @@ import org.robovm.apple.linkpresentation.*;
      */
     @Property(selector = "hasActiveDrop")
     public native boolean hasActiveDrop();
+    /**
+     * @since Available in iOS 14.0 and later.
+     */
+    @Property(selector = "isEditing")
+    public native boolean isEditing();
+    /**
+     * @since Available in iOS 14.0 and later.
+     */
+    @Property(selector = "setEditing:")
+    public native void setEditing(boolean v);
+    /**
+     * @since Available in iOS 14.0 and later.
+     */
+    @Property(selector = "allowsSelectionDuringEditing")
+    public native boolean allowsSelectionDuringEditing();
+    /**
+     * @since Available in iOS 14.0 and later.
+     */
+    @Property(selector = "setAllowsSelectionDuringEditing:")
+    public native void setAllowsSelectionDuringEditing(boolean v);
+    /**
+     * @since Available in iOS 14.0 and later.
+     */
+    @Property(selector = "allowsMultipleSelectionDuringEditing")
+    public native boolean allowsMultipleSelectionDuringEditing();
+    /**
+     * @since Available in iOS 14.0 and later.
+     */
+    @Property(selector = "setAllowsMultipleSelectionDuringEditing:")
+    public native void setAllowsMultipleSelectionDuringEditing(boolean v);
+    @WeaklyLinked
+    @Property(selector = "layerClass")
+    public static native Class<? extends CALayer> getLayerClass();
     /**
      * @since Available in iOS 11.0 and later.
      */
@@ -219,6 +262,16 @@ import org.robovm.apple.linkpresentation.*;
     public native UICollectionReusableView dequeueReusableCell(String identifier, NSIndexPath indexPath);
     @Method(selector = "dequeueReusableSupplementaryViewOfKind:withReuseIdentifier:forIndexPath:")
     public native UICollectionReusableView dequeueReusableSupplementaryView(UICollectionElementKind elementKind, String identifier, NSIndexPath indexPath);
+    /**
+     * @since Available in iOS 14.0 and later.
+     */
+    @Method(selector = "dequeueConfiguredReusableCellWithRegistration:forIndexPath:item:")
+    public native UICollectionViewCell dequeueConfiguredReusableCell(UICollectionViewCellRegistration registration, NSIndexPath indexPath, NSObject item);
+    /**
+     * @since Available in iOS 14.0 and later.
+     */
+    @Method(selector = "dequeueConfiguredReusableSupplementaryViewWithRegistration:forIndexPath:")
+    public native UICollectionReusableView dequeueConfiguredReusableSupplementaryView(UICollectionViewSupplementaryRegistration registration, NSIndexPath indexPath);
     @Method(selector = "selectItemAtIndexPath:animated:scrollPosition:")
     public native void selectItem(NSIndexPath indexPath, boolean animated, UICollectionViewScrollPosition scrollPosition);
     @Method(selector = "deselectItemAtIndexPath:animated:")
@@ -302,6 +355,16 @@ import org.robovm.apple.linkpresentation.*;
      */
     @Method(selector = "cancelInteractiveMovement")
     public native void cancelInteractiveMovement();
+    /**
+     * @since Available in iOS 9.0 and later.
+     */
+    @Method(selector = "userInterfaceLayoutDirectionForSemanticContentAttribute:")
+    public static native UIUserInterfaceLayoutDirection getUserInterfaceLayoutDirection(UISemanticContentAttribute attribute);
+    /**
+     * @since Available in iOS 10.0 and later.
+     */
+    @Method(selector = "userInterfaceLayoutDirectionForSemanticContentAttribute:relativeToLayoutDirection:")
+    public static native UIUserInterfaceLayoutDirection getUserInterfaceLayoutDirection(UISemanticContentAttribute semanticContentAttribute, UIUserInterfaceLayoutDirection layoutDirection);
     @Method(selector = "presentationSectionIndexForDataSourceSectionIndex:")
     public native @MachineSizedSInt long presentationSectionIndexForDataSourceSectionIndex(@MachineSizedSInt long dataSourceSectionIndex);
     @Method(selector = "dataSourceSectionIndexForPresentationSectionIndex:")

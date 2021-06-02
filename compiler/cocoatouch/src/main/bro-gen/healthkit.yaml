@@ -5,12 +5,6 @@ framework: HealthKit
 clang_args: ['-x', 'objective-c']
 headers:
     - /System/Library/Frameworks/HealthKit.framework/Headers/HealthKit.h
-typedefs:
-    'void (^)(BOOL, NSError *)': '@Block VoidBlock2<Boolean, NSError>'
-    'void (^)(HKStatistics *, BOOL *)': '@Block VoidBlock2<HKStatistics, Boolean>'
-    'void (^)(HKStatisticsQuery *, HKStatistics *, NSError *)': '@Block VoidBlock3<HKStatisticsQuery, HKStatistics, NSError>'
-    'void (^)(HKStatisticsCollectionQuery *, HKStatisticsCollection *, NSError *)': '@Block VoidBlock3<HKStatisticsCollectionQuery, HKStatisticsCollection, NSError>'
-    'void (^)(HKStatisticsCollectionQuery *, HKStatistics *, HKStatisticsCollection *, NSError *)': '@Block VoidBlock4<HKStatisticsCollectionQuery, HKStatistics, HKStatisticsCollection, NSError>'
 
 private_typedefs:
     'CLLocation *': org.robovm.apple.corelocation.CLLocation
@@ -51,7 +45,16 @@ enums:
     HKCategoryValueSeverity: {} #since 13.6
     HKCategoryValueAppetiteChanges: {} #since 13.6
     HKCategoryValuePresence: {} #since 13.6
-
+    HKCategoryValueEnvironmentalAudioExposureEvent: {} #since 14.0
+    HKElectrocardiogramLead: {} #since 14.0
+    HKElectrocardiogramClassification: {} #since 14.0
+    HKElectrocardiogramSymptomsStatus: {} #since 14.0
+    HKAppleECGAlgorithmVersion: {prefix: HKAppleECGAlgorithm} #since 14.0
+    HKDevicePlacementSide: {} #since 14.0
+    HKActivityMoveMode: {} #since 14.0
+    HKCategoryValueHeadphoneAudioExposureEvent: {} #since 14.2
+    HKCategoryValueContraceptive: {} #since 14.3
+    HKCategoryValueLowCardioFitnessEvent: {} #since 14.3
 typed_enums:
     HKFHIRResourceType:
         enum: HKFHIRResourceType
@@ -61,7 +64,10 @@ typed_enums:
         enum: HKClinicalTypeIdentifier
         prefix: HKClinicalTypeIdentifier
         type: NSString
-
+    HKFHIRRelease:
+        enum: HKFHIRRelease
+        prefix: HKFHIRRelease
+        type: NSString
 classes:
     HKError:
         extends: NSError
@@ -149,6 +155,8 @@ classes:
             '-wheelchairUseWithError:':
                 name: getWheelchairUse
                 throws: NSErrorException
+            '-activityMoveModeWithError:':
+                name: getActivityMoveMode
     HKObject: # DONE
         properties:
             'metadata':
@@ -366,6 +374,12 @@ classes:
                 name: createPredicateForActivitySummary
             '+predicateForClinicalRecordsWithFHIRResourceType:':
                 name: createPredicateForClinicalRecords
+            '+predicateForObjectsAssociatedWithElectrocardiogram:':
+                name: createPredicateForObjectsAssociatedWithElectrocardiogram
+            '+predicateForElectrocardiogramsWithClassification:':
+                name: predicateForElectrocardiogramsWithClassification
+            '+predicateForElectrocardiogramsWithSymptomsStatus:':
+                name: predicateForElectrocardiogramsWithSymptomsStatus
     HKAnchoredObjectQuery: # DONE
         methods:
             '-initWithType:predicate:anchor:limit:completionHandler:':
@@ -621,6 +635,20 @@ classes:
             '-initWithHeartbeatSeries:dataHandler:':
                 name: init
     HKHeartbeatSeriesSample: {} #since 13.0
+    HKElectrocardiogram: {} #since 14.0
+    HKElectrocardiogramQuery: #since 14.0
+        methods:
+            '-initWithElectrocardiogram:dataHandler:':
+                name: init
+    HKElectrocardiogramType: {} #since 14.0
+    HKElectrocardiogramVoltageMeasurement: {} #since 14.0
+    HKFHIRVersion: #since 14.0
+        methods:
+            '+versionFromVersionString:error:':
+                constructor: true
+                name: create
+                throws: NSErrorException
+    HKActivityMoveModeObject: {} #since 14.0
 protocols:
     HKWorkoutSessionDelegate: {}
 
@@ -640,27 +668,27 @@ values:
         name: '#{g[0]}'
         type: NSString
 
-    HKQuantityTypeIdentifier(BodyMassIndex|BodyFatPercentage|Height|BodyMass|LeanBodyMass):
+    HKQuantityTypeIdentifier(BodyMassIndex|BodyFatPercentage|Height|BodyMass|LeanBodyMass|WaistCircumference):
         enum: HKBodyQuantityTypeIdentifier
         name: '#{g[0]}'
         type: NSString
         extends: HKQuantityTypeIdentifier
-    HKQuantityTypeIdentifier(StepCount|DistanceWalkingRunning|DistanceCycling|DistanceWheelchair|BasalEnergyBurned|ActiveEnergyBurned|FlightsClimbed|NikeFuel|AppleExerciseTime|PushCount|DistanceSwimming|SwimmingStrokeCount):
+    HKQuantityTypeIdentifier(StepCount|DistanceWalkingRunning|DistanceCycling|DistanceWheelchair|BasalEnergyBurned|ActiveEnergyBurned|FlightsClimbed|NikeFuel|AppleExerciseTime|PushCount|DistanceSwimming|SwimmingStrokeCount|VO2Max|DistanceDownhillSnowSports|AppleStandTime|WalkingSpeed|WalkingDoubleSupportPercentage|WalkingAsymmetryPercentage|WalkingStepLength|SixMinuteWalkTestDistance|StairAscentSpeed|StairDescentSpeed|AppleMoveTime):
         enum: HKFitnessQuantityTypeIdentifier
         name: '#{g[0]}'
         type: NSString
         extends: HKQuantityTypeIdentifier
-    HKQuantityTypeIdentifier(HeartRate|BodyTemperature|BasalBodyTemperature|BloodPressureSystolic|BloodPressureDiastolic|RespiratoryRate):
+    HKQuantityTypeIdentifier(HeartRate|BodyTemperature|BasalBodyTemperature|BloodPressureSystolic|BloodPressureDiastolic|RespiratoryRate|RestingHeartRate|WalkingHeartRateAverage|HeartRateVariabilitySDNN):
         enum: HKVitalSignsQuantityTypeIdentifier
         name: '#{g[0]}'
         type: NSString
         extends: HKQuantityTypeIdentifier
-    HKQuantityTypeIdentifier(OxygenSaturation|PeripheralPerfusionIndex|BloodGlucose|NumberOfTimesFallen|ElectrodermalActivity|InhalerUsage):
+    HKQuantityTypeIdentifier(OxygenSaturation|PeripheralPerfusionIndex|BloodGlucose|NumberOfTimesFallen|ElectrodermalActivity|InhalerUsage|InsulinDelivery):
         enum: HKResultsQuantityTypeIdentifier
         name: '#{g[0]}'
         type: NSString
         extends: HKQuantityTypeIdentifier
-    HKQuantityTypeIdentifier(BloodAlcoholContent|ForcedVitalCapacity|ForcedExpiratoryVolume1|PeakExpiratoryFlowRate):
+    HKQuantityTypeIdentifier(BloodAlcoholContent|ForcedVitalCapacity|ForcedExpiratoryVolume1|PeakExpiratoryFlowRate|EnvironmentalAudioExposure|HeadphoneAudioExposure):
         enum: HKResultsQuantityTypeIdentifier
         name: '#{g[0]}'
         type: NSString
@@ -735,7 +763,7 @@ values:
         class: HKDevice
         name: 'Property#{g[0]}'
     HKQuantityTypeIdentifier(.*): # since ios 11
-        class: HKQuantityTypeIdentifier
+        class: !!FIXME  # dkimitsa: these probably should be put in different locations
         name: '#{g[0]}'
     HKSourceRevision(.*): # since ios 11
         class: HKSourceRevision

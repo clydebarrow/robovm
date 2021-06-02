@@ -32,6 +32,7 @@ import org.robovm.apple.uikit.*;
 import org.robovm.apple.avfoundation.*;
 import org.robovm.apple.coregraphics.*;
 import org.robovm.apple.iad.*;
+import org.robovm.apple.coreanimation.*;
 /*</imports>*/
 
 /*<javadoc>*/
@@ -77,6 +78,26 @@ import org.robovm.apple.iad.*;
     public native boolean isPictureInPictureActive();
     @Property(selector = "isPictureInPictureSuspended")
     public native boolean isPictureInPictureSuspended();
+    /**
+     * @since Available in iOS 14.0 and later.
+     */
+    @Property(selector = "requiresLinearPlayback")
+    public native boolean requiresLinearPlayback();
+    /**
+     * @since Available in iOS 14.0 and later.
+     */
+    @Property(selector = "setRequiresLinearPlayback:")
+    public native void setRequiresLinearPlayback(boolean v);
+    /**
+     * @since Available in iOS 14.2 and later.
+     */
+    @Property(selector = "canStartPictureInPictureAutomaticallyFromInline")
+    public native boolean canStartPictureInPictureAutomaticallyFromInline();
+    /**
+     * @since Available in iOS 14.2 and later.
+     */
+    @Property(selector = "setCanStartPictureInPictureAutomaticallyFromInline:")
+    public native void setCanStartPictureInPictureAutomaticallyFromInline(boolean v);
     /*</properties>*/
     /*<members>*//*</members>*/
     /*<methods>*/

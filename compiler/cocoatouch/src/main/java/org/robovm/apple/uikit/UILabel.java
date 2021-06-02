@@ -136,6 +136,10 @@ import org.robovm.apple.linkpresentation.*;
      */
     @Property(selector = "setAllowsDefaultTighteningForTruncation:")
     public native void setAllowsDefaultTighteningForTruncation(boolean v);
+    @Property(selector = "lineBreakStrategy")
+    public native NSLineBreakStrategy getLineBreakStrategy();
+    @Property(selector = "setLineBreakStrategy:")
+    public native void setLineBreakStrategy(NSLineBreakStrategy v);
     @Property(selector = "preferredMaxLayoutWidth")
     public native @MachineSizedFloat double getPreferredMaxLayoutWidth();
     @Property(selector = "setPreferredMaxLayoutWidth:")
@@ -152,6 +156,9 @@ import org.robovm.apple.linkpresentation.*;
     @Deprecated
     @Property(selector = "setAdjustsLetterSpacingToFitWidth:")
     public native void setAdjustsLetterSpacingToFitWidth(boolean v);
+    @WeaklyLinked
+    @Property(selector = "layerClass")
+    public static native Class<? extends CALayer> getLayerClass();
     @Property(selector = "adjustsFontForContentSizeCategory")
     public native boolean adjustsFontForContentSizeCategory();
     @Property(selector = "setAdjustsFontForContentSizeCategory:")
@@ -163,5 +170,15 @@ import org.robovm.apple.linkpresentation.*;
     public native @ByVal CGRect getTextRect(@ByVal CGRect bounds, @MachineSizedSInt long numberOfLines);
     @Method(selector = "drawTextInRect:")
     public native void drawText(@ByVal CGRect rect);
+    /**
+     * @since Available in iOS 9.0 and later.
+     */
+    @Method(selector = "userInterfaceLayoutDirectionForSemanticContentAttribute:")
+    public static native UIUserInterfaceLayoutDirection getUserInterfaceLayoutDirection(UISemanticContentAttribute attribute);
+    /**
+     * @since Available in iOS 10.0 and later.
+     */
+    @Method(selector = "userInterfaceLayoutDirectionForSemanticContentAttribute:relativeToLayoutDirection:")
+    public static native UIUserInterfaceLayoutDirection getUserInterfaceLayoutDirection(UISemanticContentAttribute semanticContentAttribute, UIUserInterfaceLayoutDirection layoutDirection);
     /*</methods>*/
 }

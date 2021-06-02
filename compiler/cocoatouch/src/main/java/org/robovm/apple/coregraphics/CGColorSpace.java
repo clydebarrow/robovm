@@ -326,34 +326,35 @@ import org.robovm.apple.uikit.*;
     @GlobalValue(symbol="kCGColorSpaceDCIP3", optional=true)
     public static native String DCIP3();
     /**
+     * @since Available in iOS 14.0 and later.
+     */
+    @GlobalValue(symbol="kCGColorSpaceExtendedITUR_2020", optional=true)
+    public static native String ExtendedITUR_2020();
+    /**
      * @since Available in iOS 12.3 and later.
      */
     @GlobalValue(symbol="kCGColorSpaceExtendedLinearITUR_2020", optional=true)
     public static native String ExtendedLinearITUR_2020();
+    /**
+     * @since Available in iOS 14.0 and later.
+     */
+    @GlobalValue(symbol="kCGColorSpaceExtendedDisplayP3", optional=true)
+    public static native String ExtendedDisplayP3();
     /**
      * @since Available in iOS 12.3 and later.
      */
     @GlobalValue(symbol="kCGColorSpaceExtendedLinearDisplayP3", optional=true)
     public static native String ExtendedLinearDisplayP3();
     /**
-     * @since Available in iOS 12.6 and later.
-     * @deprecated Deprecated in iOS 13.4. No longer supported
+     * @since Available in iOS 14.0 and later.
      */
-    @Deprecated
-    @GlobalValue(symbol="kCGColorSpaceITUR_2020_PQ_EOTF", optional=true)
-    public static native String ITUR_2020_PQ_EOTF();
+    @GlobalValue(symbol="kCGColorSpaceITUR_2100_PQ", optional=true)
+    public static native String ITUR_2100_PQ();
     /**
-     * @since Available in iOS 13.4 and later.
+     * @since Available in iOS 14.0 and later.
      */
-    @GlobalValue(symbol="kCGColorSpaceITUR_2020_PQ", optional=true)
-    public static native String ITUR_2020_PQ();
-    /**
-     * @since Available in iOS 12.6 and later.
-     * @deprecated Deprecated in iOS 13.4. No longer supported
-     */
-    @Deprecated
-    @GlobalValue(symbol="kCGColorSpaceDisplayP3_PQ_EOTF", optional=true)
-    public static native String DisplayP3_PQ_EOTF();
+    @GlobalValue(symbol="kCGColorSpaceITUR_2100_HLG", optional=true)
+    public static native String ITUR_2100_HLG();
     /**
      * @since Available in iOS 13.4 and later.
      */
@@ -365,10 +366,33 @@ import org.robovm.apple.uikit.*;
     @GlobalValue(symbol="kCGColorSpaceDisplayP3_HLG", optional=true)
     public static native String DisplayP3_HLG();
     /**
-     * @since Available in iOS 12.6 and later.
+     * @since Available in iOS 13.4 and later.
+     * @deprecated Deprecated in iOS 14.0. No longer supported
      */
+    @Deprecated
+    @GlobalValue(symbol="kCGColorSpaceITUR_2020_PQ", optional=true)
+    public static native String ITUR_2020_PQ();
+    /**
+     * @since Available in iOS 12.6 and later.
+     * @deprecated Deprecated in iOS 14.0. No longer supported
+     */
+    @Deprecated
     @GlobalValue(symbol="kCGColorSpaceITUR_2020_HLG", optional=true)
     public static native String ITUR_2020_HLG();
+    /**
+     * @since Available in iOS 12.6 and later.
+     * @deprecated Deprecated in iOS 13.4. No longer supported
+     */
+    @Deprecated
+    @GlobalValue(symbol="kCGColorSpaceDisplayP3_PQ_EOTF", optional=true)
+    public static native String DisplayP3_PQ_EOTF();
+    /**
+     * @since Available in iOS 12.6 and later.
+     * @deprecated Deprecated in iOS 13.4. No longer supported
+     */
+    @Deprecated
+    @GlobalValue(symbol="kCGColorSpaceITUR_2020_PQ_EOTF", optional=true)
+    public static native String ITUR_2020_PQ_EOTF();
     /**
      * @since Available in iOS 10.0 and later.
      */
@@ -465,6 +489,11 @@ import org.robovm.apple.uikit.*;
     @Bridge(symbol="CGColorSpaceIsHDR", optional=true)
     public native boolean isHDR();
     /**
+     * @since Available in iOS 14.0 and later.
+     */
+    @Bridge(symbol="CGColorSpaceUsesITUR_2100TF", optional=true)
+    public native boolean usesITUR_2100TF();
+    /**
      * @since Available in iOS 10.0 and later.
      */
     @Bridge(symbol="CGColorSpaceSupportsOutput", optional=true)
@@ -479,6 +508,26 @@ import org.robovm.apple.uikit.*;
      */
     @Bridge(symbol="CGColorSpaceCreateWithPropertyList", optional=true)
     public static native @org.robovm.rt.bro.annotation.Marshaler(CFType.NoRetainMarshaler.class) CGColorSpace createWithPropertyList(CFType plist);
+    /**
+     * @since Available in iOS 10.0 and later.
+     */
+    @Bridge(symbol="CGColorSpaceUsesExtendedRange", optional=true)
+    public native boolean usesExtendedRange();
+    /**
+     * @since Available in iOS 14.0 and later.
+     */
+    @Bridge(symbol="CGColorSpaceCreateLinearized", optional=true)
+    public static native @org.robovm.rt.bro.annotation.Marshaler(CFType.NoRetainMarshaler.class) CGColorSpace createLinearized(CGColorSpace space);
+    /**
+     * @since Available in iOS 14.0 and later.
+     */
+    @Bridge(symbol="CGColorSpaceCreateExtended", optional=true)
+    public static native @org.robovm.rt.bro.annotation.Marshaler(CFType.NoRetainMarshaler.class) CGColorSpace createExtended(CGColorSpace space);
+    /**
+     * @since Available in iOS 14.0 and later.
+     */
+    @Bridge(symbol="CGColorSpaceCreateExtendedLinearized", optional=true)
+    public static native @org.robovm.rt.bro.annotation.Marshaler(CFType.NoRetainMarshaler.class) CGColorSpace createExtendedLinearized(CGColorSpace space);
     /**
      * @deprecated Deprecated in iOS 11.0. No longer supported
      */

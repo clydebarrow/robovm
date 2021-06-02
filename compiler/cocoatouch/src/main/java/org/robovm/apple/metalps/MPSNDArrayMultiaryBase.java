@@ -61,17 +61,44 @@ import org.robovm.apple.metal.*;
     public native MPSNDArrayAllocator getDestinationArrayAllocator();
     @Property(selector = "setDestinationArrayAllocator:")
     public native void setDestinationArrayAllocator(MPSNDArrayAllocator v);
+    @Property(selector = "supportsSecureCoding")
+    public static native boolean supportsSecureCoding();
     /*</properties>*/
     /*<members>*//*</members>*/
     /*<methods>*/
+    /**
+     * @since Available in iOS 13.0 and later.
+     * @deprecated Deprecated in iOS 14.0. Use derived filter properties
+     */
+    @Deprecated
     @Method(selector = "offsetsAtSourceIndex:")
     public native @ByVal MPSNDArrayOffsets offsetsAtSourceIndex(@MachineSizedUInt long sourceIndex);
+    /**
+     * @since Available in iOS 13.0 and later.
+     * @deprecated Deprecated in iOS 14.0. Use derived filter properties
+     */
+    @Deprecated
     @Method(selector = "edgeModeAtSourceIndex:")
     public native MPSImageEdgeMode edgeModeAtSourceIndex(@MachineSizedUInt long sourceIndex);
+    /**
+     * @since Available in iOS 13.0 and later.
+     * @deprecated Deprecated in iOS 14.0. Use derived filter properties
+     */
+    @Deprecated
     @Method(selector = "kernelSizesForSourceIndex:")
     public native @ByVal MPSNDArraySizes kernelSizesForSourceIndex(@MachineSizedUInt long sourceIndex);
+    /**
+     * @since Available in iOS 13.0 and later.
+     * @deprecated Deprecated in iOS 14.0. Use derived filter properties
+     */
+    @Deprecated
     @Method(selector = "stridesForSourceIndex:")
     public native @ByVal MPSNDArrayOffsets stridesForSourceIndex(@MachineSizedUInt long sourceIndex);
+    /**
+     * @since Available in iOS 13.0 and later.
+     * @deprecated Deprecated in iOS 14.0. Use derived filter properties
+     */
+    @Deprecated
     @Method(selector = "dilationRatesForSourceIndex:")
     public native @ByVal MPSNDArraySizes dilationRatesForSourceIndex(@MachineSizedUInt long sourceIndex);
     @Method(selector = "initWithDevice:sourceCount:")

@@ -30,6 +30,7 @@ import org.robovm.rt.bro.ptr.*;
 import org.robovm.apple.foundation.*;
 import org.robovm.apple.eventkit.*;
 import org.robovm.apple.corelocation.*;
+import org.robovm.apple.coregraphics.*;
 /*</imports>*/
 
 /*<javadoc>*/
@@ -61,5 +62,11 @@ import org.robovm.apple.corelocation.*;
     public static native INBillPayeeResolutionResult disambiguation(NSArray<INBillPayee> billPayeesToDisambiguate);
     @Method(selector = "confirmationRequiredWithBillPayeeToConfirm:")
     public static native INBillPayeeResolutionResult confirmationRequired(INBillPayee billPayeeToConfirm);
+    @Method(selector = "needsValue")
+    public static native INBillPayeeResolutionResult needsValue();
+    @Method(selector = "notRequired")
+    public static native INBillPayeeResolutionResult notRequired();
+    @Method(selector = "unsupported")
+    public static native INBillPayeeResolutionResult unsupported();
     /*</methods>*/
 }

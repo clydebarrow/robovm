@@ -61,6 +61,11 @@ import org.robovm.apple.metal.*;
     public native MPSCNNLossType getLossType();
     @Property(selector = "reductionType")
     public native MPSCNNReductionType getReductionType();
+    /**
+     * @since Available in iOS 14.0 and later.
+     */
+    @Property(selector = "reduceAcrossBatch")
+    public native boolean isReduceAcrossBatch();
     @Property(selector = "numberOfClasses")
     public native @MachineSizedUInt long getNumberOfClasses();
     @Property(selector = "weight")
@@ -83,6 +88,8 @@ import org.robovm.apple.metal.*;
     public native boolean isComputeLabelGradients();
     @Property(selector = "setComputeLabelGradients:")
     public native void setComputeLabelGradients(boolean v);
+    @Property(selector = "supportsSecureCoding")
+    public static native boolean supportsSecureCoding();
     /*</properties>*/
     /*<members>*//*</members>*/
     /*<methods>*/

@@ -57,7 +57,18 @@ import org.robovm.apple.metal.*;
     public MPSImageEuclideanDistanceTransform(NSCoder decoder) { super(decoder); }
     /*</constructors>*/
     /*<properties>*/
-    
+    /**
+     * @since Available in iOS 14.0 and later.
+     */
+    @Property(selector = "searchLimitRadius")
+    public native float getSearchLimitRadius();
+    /**
+     * @since Available in iOS 14.0 and later.
+     */
+    @Property(selector = "setSearchLimitRadius:")
+    public native void setSearchLimitRadius(float v);
+    @Property(selector = "supportsSecureCoding")
+    public static native boolean supportsSecureCoding();
     /*</properties>*/
     /*<members>*//*</members>*/
     /*<methods>*/

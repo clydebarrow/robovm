@@ -30,6 +30,7 @@ import org.robovm.rt.bro.ptr.*;
 import org.robovm.apple.foundation.*;
 import org.robovm.apple.uikit.*;
 import org.robovm.apple.coregraphics.*;
+import org.robovm.apple.coreanimation.*;
 /*</imports>*/
 
 /*<javadoc>*/
@@ -67,6 +68,21 @@ import org.robovm.apple.coregraphics.*;
     public native String getCallerBundleIdentifier();
     @Property(selector = "authorizationOptions")
     public native NSDictionary<?, ?> getAuthorizationOptions();
+    /**
+     * @since Available in iOS 14.0 and later.
+     */
+    @Property(selector = "isCallerManaged")
+    public native boolean isCallerManaged();
+    /**
+     * @since Available in iOS 14.0 and later.
+     */
+    @Property(selector = "callerTeamIdentifier")
+    public native String getCallerTeamIdentifier();
+    /**
+     * @since Available in iOS 14.0 and later.
+     */
+    @Property(selector = "localizedCallerDisplayName")
+    public native String getLocalizedCallerDisplayName();
     /*</properties>*/
     /*<members>*//*</members>*/
     /*<methods>*/
