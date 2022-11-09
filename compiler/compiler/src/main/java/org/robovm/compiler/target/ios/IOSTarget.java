@@ -26,19 +26,13 @@ import com.dd.plist.PropertyListFormatException;
 import com.dd.plist.PropertyListParser;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.AndFileFilter;
 import org.apache.commons.io.filefilter.PrefixFileFilter;
 import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.apache.commons.lang3.tuple.Pair;
 import org.robovm.compiler.CompilerException;
-import org.robovm.compiler.config.AppExtension;
-import org.robovm.compiler.config.Arch;
-import org.robovm.compiler.config.Config;
-import org.robovm.compiler.config.OS;
-import org.robovm.compiler.config.Resource;
-import org.robovm.compiler.config.WatchKitApp;
+import org.robovm.compiler.config.*;
 import org.robovm.compiler.log.Logger;
 import org.robovm.compiler.target.AbstractTarget;
 import org.robovm.compiler.target.LaunchParameters;
@@ -123,11 +117,16 @@ public class IOSTarget extends AbstractTarget {
     }
 
     public static boolean isSimulatorArch(Arch arch) {
-        return arch == Arch.x86 || arch == Arch.x86_64;
+        Environment env = arch.getEnv();
+        CpuArch cpuArch = arch.getCpuArch();
+        return env == Environment.Simulator &&
+                (cpuArch == CpuArch.x86 || cpuArch == CpuArch.x86_64 || cpuArch == CpuArch.arm64);
     }
 
     public static boolean isDeviceArch(Arch arch) {
-        return arch == Arch.thumbv7 || arch == Arch.arm64;
+        Environment env = arch.getEnv();
+        CpuArch cpuArch = arch.getCpuArch();
+        return env == Environment.Native &&  (cpuArch == CpuArch.thumbv7 || cpuArch == CpuArch.arm64);
     }
 
     /**
@@ -285,35 +284,29 @@ public class IOSTarget extends AbstractTarget {
             throw new CompilerException("Failed to get major version number from "
                     + "MinimumOSVersion string '" + minVersion + "'");
         }
+
+        ccArgs.add("--target=" + config.getClangTriple(getMinimumOSVersion()));
+
         if (isDeviceArch(arch)) {
-            ccArgs.add("-miphoneos-version-min=" + minVersion);
-            if (config.isDebug()) {
-                ccArgs.add("-Wl,-no_pie");
-            }
             if (config.isEnableBitcode()) {
                 // tells clang to keep bitcode while linking
                 ccArgs.add("-fembed-bitcode");
             }
         } else {
-            ccArgs.add("-mios-simulator-version-min=" + minVersion);
-            if (config.getArch() == Arch.x86 || config.isDebug()) {
+            if (config.getArch().getCpuArch() == CpuArch.x86) {
                 ccArgs.add("-Wl,-no_pie");
             }
         }
         ccArgs.add("-isysroot");
         ccArgs.add(sdk.getRoot().getAbsolutePath());
 
-        // specify sdk version for linker
-        libArgs.add("-Xlinker");
-        libArgs.add("-sdk_version");
-        libArgs.add("-Xlinker");
-        libArgs.add(sdk.getVersion());
-
         // add runtime path to swift libs first to support swift-5 libs location
-        libArgs.add("-Xlinker");
-        libArgs.add("-rpath");
-        libArgs.add("-Xlinker");
-        libArgs.add("/usr/lib/swift");
+        if (config.hasSwiftSupport()) {
+            libArgs.add("-Xlinker");
+            libArgs.add("-rpath");
+            libArgs.add("-Xlinker");
+            libArgs.add("/usr/lib/swift");
+        }
         // specify dynamic library loading path
         libArgs.add("-Xlinker");
         libArgs.add("-rpath");
@@ -342,7 +335,7 @@ public class IOSTarget extends AbstractTarget {
 
     protected void prepareInstall(File installDir) throws IOException {
         createInfoPList(installDir);
-        generateDsym(installDir, getExecutable(), false);
+        generateDsym(getDsymDir(installDir), new File(installDir, getExecutable()));
 
         if (isDeviceArch(arch)) {
             // strip local symbols
@@ -395,7 +388,8 @@ public class IOSTarget extends AbstractTarget {
     protected void prepareLaunch(File appDir) throws IOException {
         super.doInstall(appDir, getExecutable(), appDir);
         createInfoPList(appDir);
-        generateDsym(appDir, getExecutable(), true);
+        generateDsym(getDsymDir(appDir), new File(appDir, getExecutable()));
+        copyToIndexedDir(appDir, getExecutable(), getDsymDir(appDir), new File(appDir, getExecutable()));
 
         // strip symbols to reduce application size, all debugger symbols converted into globals
         strip(appDir, getExecutable());
@@ -638,7 +632,15 @@ public class IOSTarget extends AbstractTarget {
         codesign(identity, entitlementsPList, false, false, true, extensionDir);
     }
 
-    private void codesign(SigningIdentity identity, File entitlementsPList, boolean preserveMetadata, boolean verbose, boolean allocate, File target) throws IOException {
+    private void codesign(SigningIdentity identity, File entitlementsPList, boolean preserveMetadata,
+                          boolean verbose, boolean allocate, File target) throws IOException {
+        // just a wrapper that forces "--generate-entitlement-der" for all kind of signing
+        boolean generateDerEntitlement = true;
+        codesign(identity, entitlementsPList, preserveMetadata, generateDerEntitlement, verbose, allocate, target);
+    }
+
+    private void codesign(SigningIdentity identity, File entitlementsPList, boolean preserveMetadata,
+                          boolean generateDerEntitlement, boolean verbose, boolean allocate, File target) throws IOException {
         List<Object> args = new ArrayList<>();
         args.add("-f");
         args.add("-s");
@@ -649,6 +651,9 @@ public class IOSTarget extends AbstractTarget {
         }
         if (preserveMetadata) {
             args.add("--preserve-metadata=identifier,entitlements");
+        }
+        if (generateDerEntitlement) {
+            args.add("--generate-entitlement-der");
         }
         if (verbose) {
             args.add("--verbose");
@@ -756,25 +761,17 @@ public class IOSTarget extends AbstractTarget {
         }
     }
 
-    private void generateDsym(final File dir, final String executable, boolean copyToIndexedDir) throws IOException {
-        final File dsymDir = new File(dir.getParentFile(), dir.getName() + ".dSYM");
-        final File exePath = new File(dir, executable);
+    private File generateDsym(final File dsymDir, final File exePath) throws IOException {
         FileUtils.deleteDirectory(dsymDir);
-        final Process process = new Executor(config.getLogger(), "xcrun")
-                .args("dsymutil", "-o", dsymDir, exePath)
-                .execAsync();
-        if (copyToIndexedDir) {
-            new Thread() {
-                public void run() {
-                    try {
-                        process.waitFor();
-                    } catch (InterruptedException e) {
-                        return;
-                    }
-                    copyToIndexedDir(dir, executable, dsymDir, exePath);
-                }
-            }.start();
-        }
+        ToolchainUtil.generateDsym(config, dsymDir, exePath);
+        return dsymDir;
+    }
+
+    private void dsymToSymbols(File symbolsDir, File dsymDir, String executable) throws IOException {
+        final File dsymExecutable = new File(dsymDir, "/Contents/Resources/DWARF/" + executable);
+        FileUtils.deleteDirectory(symbolsDir);
+        symbolsDir.mkdirs();
+        ToolchainUtil.dsymToSymbols(config, dsymExecutable, symbolsDir);
     }
 
     private void strip(File dir, String executable) throws IOException {
@@ -801,7 +798,7 @@ public class IOSTarget extends AbstractTarget {
 
     @Override
     public List<Arch> getDefaultArchs() {
-        return Arrays.asList(Arch.thumbv7, Arch.arm64);
+        return Arrays.asList(new Arch(CpuArch.thumbv7), new Arch(CpuArch.arm64));
     }
 
     public void archive() throws IOException {
@@ -830,8 +827,11 @@ public class IOSTarget extends AbstractTarget {
                 .args("-Rp", appDir, payloadDir)
                 .exec();
 
+        config.getLogger().info("Generating Symbols from dsym");
+        dsymToSymbols(new File(tmpDir, "Symbols"), getDsymDir(appDir), getExecutable());
+
         File frameworksDir = new File(appDir, "Frameworks");
-        if (frameworksDir.exists()){
+        if (frameworksDir.exists() && config.hasSwiftSupport() && config.getSwiftSupport().shouldCopySwiftLibs()){
             String[] swiftLibs = frameworksDir.list(new AndFileFilter(
                     new PrefixFileFilter("libswift"),
                     new SuffixFileFilter(".dylib")));
@@ -1021,6 +1021,10 @@ public class IOSTarget extends AbstractTarget {
         return config.getMainClass() != null ? config.getMainClass() : config.getExecutableName();
     }
 
+    protected File getDsymDir(File appDir) {
+        return new File(appDir.getParentFile(), appDir.getName() + ".dSYM");
+    }
+
     protected String getMinimumOSVersion() {
         if (config.getIosInfoPList() != null) {
             String minVersion = config.getIosInfoPList().getMinimumOSVersion();
@@ -1178,7 +1182,7 @@ public class IOSTarget extends AbstractTarget {
         super.init(config);
 
         if (config.getArch() == null) {
-            arch = Arch.thumbv7;
+            arch = new Arch(CpuArch.arm64, Environment.Native);
         } else {
             if (!isSimulatorArch(config.getArch()) && !isDeviceArch(config.getArch())) {
                 throw new IllegalArgumentException("Arch '" + config.getArch()
@@ -1186,7 +1190,6 @@ public class IOSTarget extends AbstractTarget {
             }
             arch = config.getArch();
         }
-
         if (config.getIosInfoPList() != null) {
             config.getIosInfoPList().parse(config.getProperties());
         }

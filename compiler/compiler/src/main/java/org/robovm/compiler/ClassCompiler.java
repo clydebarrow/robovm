@@ -51,7 +51,6 @@ import org.robovm.compiler.llvm.Linkage;
 import org.robovm.compiler.llvm.Load;
 import org.robovm.compiler.llvm.NullConstant;
 import org.robovm.compiler.llvm.Ordering;
-import org.robovm.compiler.llvm.PackedStructureConstantBuilder;
 import org.robovm.compiler.llvm.PointerType;
 import org.robovm.compiler.llvm.Ret;
 import org.robovm.compiler.llvm.Store;
@@ -228,7 +227,7 @@ public class ClassCompiler {
     private final TrampolineCompiler trampolineResolver;
     private final ObjCMemberPlugin.MethodCompiler objcMethodCompiler;
 
-    private final ByteArrayOutputStream output = new ByteArrayOutputStream(256 * 1024);
+    private final ByteArrayOutputStream output = new ByteArrayOutputStream(4 * 1024 * 1024);
     
     public ClassCompiler(Config config) {
         this.config = config;
@@ -296,7 +295,8 @@ public class ClassCompiler {
         OS os = config.getOs();
 
         try {
-            config.getLogger().info("Compiling %s (%s %s %s)", clazz, os, arch, config.isDebug() ? "debug" : "release");
+            config.getLogger().info("Compiling %s (%s %s %s)", clazz, os, arch,
+                    config.isDebug() ? "debug" : "release");
             output.reset();
             compile(clazz, output);
         } catch (Throwable t) {
@@ -812,7 +812,7 @@ public class ClassCompiler {
             sootClass.addMethod(offset);
         }
         
-        mb.addInclude(getClass().getClassLoader().getResource(String.format("header-%s-%s.ll", config.getOs().getFamily(), config.getArch())));
+        mb.addInclude(getClass().getClassLoader().getResource(String.format("header-%s-%s.ll", config.getOs().getFamily(), config.getArch().getCpuArch())));
         mb.addInclude(getClass().getClassLoader().getResource("header.ll"));
 
         mb.addFunction(createLdcClass());
@@ -835,8 +835,17 @@ public class ClassCompiler {
         }
 
         // After this point no changes to methods/fields may be done by CompilerPlugins.
-        ci.initClassInfo(); 
+        ci.initClassInfo();
 
+        // when Java18 used as compiler JDK-8272564 changes will be applied this will affect invocation of
+        // java.lang.Object methods on interface receivers.
+        // as per changes invokevirtual is replaced with invokeinterface and these methods
+        // has to be resolved as per https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-5.html#jvms-5.4.3.4 item 3
+        // in RoboVM case this means that final methods of "java.lang.Object" has to be available for lookup,
+        // thus changes added to include [lookup] wrappers for final methods in this case
+        // otherwise it will fail during linking with message(s):
+        // Undefined symbols for architecture arm64:"[j]java.lang.Object.notifyAll()V[lookup]"
+        boolean isJavaLangObject = sootClass.getName().equals("java.lang.Object");
         for (SootMethod method : sootClass.getMethods()) {
             
             for (CompilerPlugin compilerPlugin : config.getCompilerPlugins()) {
@@ -870,7 +879,7 @@ public class ClassCompiler {
             }
             if (!name.equals("<clinit>") && !name.equals("<init>") 
                     && !method.isPrivate() && !method.isStatic() 
-                    && !Modifier.isFinal(method.getModifiers()) 
+                    && (isJavaLangObject || !Modifier.isFinal(method.getModifiers()))
                     && !Modifier.isFinal(sootClass.getModifiers())) {
                 
                 createLookupFunction(method);
@@ -1302,7 +1311,7 @@ public class ClassCompiler {
         header.add(new IntegerConstant((short) countReferences(classFields)));
         header.add(new IntegerConstant((short) countReferences(instanceFields)));
 
-        PackedStructureConstantBuilder body = new PackedStructureConstantBuilder();
+        StructureConstantBuilder body = new StructureConstantBuilder();
         body.add(new IntegerConstant((short) sootClass.getInterfaceCount()));
         body.add(new IntegerConstant((short) sootClass.getFieldCount()));
         body.add(new IntegerConstant((short) sootClass.getMethodCount()));
@@ -1613,7 +1622,7 @@ public class ClassCompiler {
         if (Modifier.isVolatile(field.getModifiers())) {
             fn.add(new Fence(Ordering.seq_cst));
             if (LongType.v().equals(field.getType())) {
-                fn.add(new Load(result, fieldPtr, false, Ordering.unordered, 8));
+                fn.add(new Load(result, fieldPtr, false, Ordering.monotonic, 8));
             } else {
                 fn.add(new Load(result, fieldPtr));
             }
@@ -1645,7 +1654,7 @@ public class ClassCompiler {
         }
         if (Modifier.isVolatile(field.getModifiers()) || !field.isStatic() && Modifier.isFinal(field.getModifiers())) {
             if (LongType.v().equals(field.getType())) {
-                fn.add(new Store(value, fieldPtr, false, Ordering.unordered, 8));
+                fn.add(new Store(value, fieldPtr, false, Ordering.monotonic, 8));
             } else {
                 fn.add(new Store(value, fieldPtr));
             }

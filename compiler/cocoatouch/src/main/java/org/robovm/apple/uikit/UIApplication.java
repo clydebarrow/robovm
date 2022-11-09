@@ -218,9 +218,6 @@ import org.robovm.apple.linkpresentation.*;
         }
     }
     
-    /* Used to preserve the key window from being released. */
-    private static UIWindow KEY_WINDOW = null;
-    
     /*<ptr>*/public static class UIApplicationPtr extends Ptr<UIApplication, UIApplicationPtr> {}/*</ptr>*/
     /*<bind>*/static { ObjCRuntime.bind(UIApplication.class); }/*</bind>*/
     /*<constants>*//*</constants>*/
@@ -252,6 +249,10 @@ import org.robovm.apple.linkpresentation.*;
     @Deprecated
     @Property(selector = "keyWindow")
     public native UIWindow getKeyWindow();
+    /**
+     * @deprecated Deprecated in iOS 15.0. Use UIWindowScene.windows on a relevant window scene instead
+     */
+    @Deprecated
     @Property(selector = "windows")
     public native NSArray<UIWindow> getWindows();
     /**
@@ -423,20 +424,6 @@ import org.robovm.apple.linkpresentation.*;
             }
         }
         
-        // Observe the key UIWindow and keep a strong reference to it.
-        NSNotificationCenter.getDefaultCenter().addObserver(UIWindow.DidBecomeKeyNotification(), null, NSOperationQueue.getMainQueue(), new VoidBlock1<NSNotification>() {
-            @Override
-            public void invoke(NSNotification a) {
-                KEY_WINDOW = (UIWindow) a.getObject();
-            }
-        });
-        NSNotificationCenter.getDefaultCenter().addObserver(UIWindow.DidResignKeyNotification(), null, NSOperationQueue.getMainQueue(), new VoidBlock1<NSNotification>() {
-            @Override
-            public void invoke(NSNotification a) {
-                if (a.getObject() == KEY_WINDOW) KEY_WINDOW = null;
-            }
-        });
-        
         try {
             preloadClasses();
         } catch (UnsupportedEncodingException e) {
@@ -544,6 +531,11 @@ import org.robovm.apple.linkpresentation.*;
     public static native NSString ProtectedDataDidBecomeAvailableNotification();
     @GlobalValue(symbol="UIApplicationOpenSettingsURLString", optional=true)
     public static native String getOpenSettingsURLString();
+    /**
+     * @since Available in iOS 15.4 and later.
+     */
+    @GlobalValue(symbol="UIApplicationOpenNotificationSettingsURLString", optional=true)
+    public static native String getOpenNotificationSettingsURLString();
     @GlobalValue(symbol="UIApplicationUserDidTakeScreenshotNotification", optional=true)
     public static native NSString UserDidTakeScreenshotNotification();
     

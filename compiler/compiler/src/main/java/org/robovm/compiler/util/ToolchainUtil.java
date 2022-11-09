@@ -17,22 +17,22 @@
  */
 package org.robovm.compiler.util;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.robovm.compiler.config.Arch;
 import org.robovm.compiler.config.Config;
+import org.robovm.compiler.config.CpuArch;
 import org.robovm.compiler.config.OS;
 import org.robovm.compiler.config.tools.TextureAtlas;
 import org.robovm.compiler.log.ConsoleLogger;
 import org.robovm.compiler.log.Logger;
 import org.robovm.compiler.target.ios.IOSTarget;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author niklas
@@ -52,6 +52,8 @@ public class ToolchainUtil {
     private static String NM;
     private static String OTOOL;
     private static String FILE;
+    private static String DSYMUTIL;
+    private static String SYMBOLS;
 
     private static String getIOSDevClang() throws IOException {
         if (IOS_DEV_CLANG == null) {
@@ -142,6 +144,20 @@ public class ToolchainUtil {
             PACKAGE_APPLICATION = findXcodeCommand("PackageApplication", "iphoneos");
         }
         return PACKAGE_APPLICATION;
+    }
+
+    private static String getDsymutil() throws IOException {
+        if (DSYMUTIL == null) {
+            DSYMUTIL = findXcodeCommand("dsymutil", "iphoneos");
+        }
+        return DSYMUTIL;
+    }
+
+    private static String getSymbols() throws IOException {
+        if (SYMBOLS == null) {
+            SYMBOLS = findXcodeCommand("symbols", "iphoneos");
+        }
+        return SYMBOLS;
     }
 
     private static void handleExecuteException(ExecuteException e) {
@@ -329,7 +345,7 @@ public class ToolchainUtil {
         }
         args.add("-output");
         args.add(outFile);
-        new Executor(Logger.NULL_LOGGER, getLipo()).args(args).exec();
+        new Executor(config.getLogger(), getLipo()).args(args).exec();
     }
 
 
@@ -350,6 +366,15 @@ public class ToolchainUtil {
 
     public static void packageApplication(Config config, File appDir, File outFile) throws IOException {
         new Executor(config.getLogger(), getPackageApplication()).args(appDir, "-o", outFile).exec();
+    }
+
+    public static void generateDsym(Config config, File dsymDir, File exePath) throws IOException {
+        new Executor(config.getLogger(), getDsymutil()).args("-o", dsymDir, exePath).exec();
+    }
+
+    public static void dsymToSymbols(Config config, File dsymExecutable, File outDir) throws IOException {
+        new Executor(config.getLogger(), getSymbols()).args("-noTextInSOD", "-noDaemon", "-arch", "all",
+                "-symbolsPackageDir", outDir, dsymExecutable).exec();
     }
 
     private static List<File> writeObjectsFiles(Config config, List<File> objectFiles, int maxObjectsPerFile,
@@ -390,16 +415,9 @@ public class ToolchainUtil {
             opts.add("-g");
         }
         if (isDarwin) {
-            opts.add("-arch");
-            opts.add(config.getArch().getClangName());
             for (File objectsFile : objectsFiles) {
                 opts.add("-Wl,-filelist," + objectsFile.getAbsolutePath());
             }
-            /*
-             * See #123, ignore ld: warning: pointer not aligned at address [infostruct] message with Xcode 8.3
-             * unless we find a better solution
-             */
-            opts.add("-w");
         } else {
             opts.add(config.getArch().is32Bit() ? "-m32" : "-m64");
             for (File objectsFile : objectsFiles) {
@@ -416,7 +434,7 @@ public class ToolchainUtil {
         if (config.getCcBinPath() != null) {
             ccPath = config.getCcBinPath().getAbsolutePath();
         } else if (config.getOs() == OS.ios) {
-            if (config.getArch() == Arch.x86) {
+            if (config.getArch().getCpuArch() == CpuArch.x86) {
                 ccPath = getIOSSimClang();
             } else {
                 ccPath = getIOSDevClang();

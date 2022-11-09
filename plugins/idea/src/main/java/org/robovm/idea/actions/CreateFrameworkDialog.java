@@ -58,7 +58,7 @@ public class CreateFrameworkDialog extends DialogWrapper {
         String configModule = properties.getValue(MODULE_NAME, "");
         String configDestDir = properties.getValue(DESTINATION_DIR, "");
 
-        for(Module module: RoboVmPlugin.getRoboVmModules(project, FrameworkTarget.TYPE)) {
+        for(Module module: RoboVmPlugin.getRoboVmModules(project, FrameworkTarget::matches)) {
             this.module.addItem(module.getName());
             if(module.getName().equals(configModule)) {
                 this.module.setSelectedIndex(this.module.getItemCount()-1);
@@ -73,7 +73,7 @@ public class CreateFrameworkDialog extends DialogWrapper {
             @Override
             public void actionPerformed(ActionEvent e) {
                 FileChooserDialog fileChooser = FileChooserFactory.getInstance()
-                        .createFileChooser(new FileChooserDescriptor(true, false, false, false, false, false) {
+                        .createFileChooser(new FileChooserDescriptor(false, true, false, false, false, false) {
                             @Override
                             public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
                                 return file.isDirectory();

@@ -111,7 +111,7 @@ public class CreateIpaDialog extends DialogWrapper {
 
         browseButton.addActionListener(e -> {
             FileChooserDialog fileChooser = FileChooserFactory.getInstance()
-                    .createFileChooser(new FileChooserDescriptor(true, false, false, false, false, false) {
+                    .createFileChooser(new FileChooserDescriptor(false, true, false, false, false, false) {
                         @Override
                         public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
                             return file.isDirectory();
@@ -166,18 +166,19 @@ public class CreateIpaDialog extends DialogWrapper {
         String signingIdentity = (String) Objects.requireNonNull(this.signingIdentity.getSelectedItem());
         String provisioningProile = (String) Objects.requireNonNull(this.provisioningProfile.getSelectedItem());
         String arch = (String) Objects.requireNonNull(this.archs.getSelectedItem());
-        List<Arch> archs = new ArrayList<>();
+        Arch[] archs;
         switch (arch) {
             case ARCHS_ALL:
-                archs.add(Arch.thumbv7);
-                archs.add(Arch.arm64);
+                archs = new Arch[]{Arch.thumbv7, Arch.arm64};
                 break;
             case ARCHS_32BIT:
-                archs.add(Arch.thumbv7);
+                archs = new Arch[]{Arch.thumbv7};
                 break;
             case ARCHS_64BIT:
-                archs.add(Arch.arm64);
+                archs = new Arch[]{Arch.arm64};
                 break;
+            default:
+                throw new IllegalStateException("Unknown arch configuration!");
         }
         return new CreateIpaAction.IpaConfig(module, new File(this.destinationDir.getText()), signingIdentity, provisioningProile, archs);
     }

@@ -18,9 +18,14 @@
     </description>
     <change-notes>
         <![CDATA[
-            <b>2.3.14</b>
-            <li> IDEA compatibility </li>
-            <li> Gradle 7 Compatibility </li>
+            <b>2.3.17</b>
+            <li> Debugger improvements, thread statuses </li>
+            <li> IDEA plugin update </li>
+            <li> Memory optimizations </li>
+            <li> Fix debugger crashes </li>
+            <li> iOS 15.4 binding updates </li>
+            <li> Sideloading app fixes </li>
+            <li> m1 arm simulator fixes </li>
         ]]>
     </change-notes>
 
@@ -37,6 +42,8 @@
         <stepsBeforeRunProvider implementation="org.robovm.idea.running.RoboVmBeforeRunTaskProvider"/>
         <!-- dkimitsa: removed as it is not required for open source xcode integration -->
         <!--<applicationConfigurable implementation="org.robovm.idea.config.RoboVmGlobalConfig"></applicationConfigurable>-->
+        <toolWindow id="RoboVM" anchor="bottom" icon="org.robovm.idea.RoboVmIcons.ROBOVM_SMALL" secondary="true"
+                    factoryClass="org.robovm.idea.components.RoboVmToolWindowFactory"/>
     </extensions>
 
     <application-components>
@@ -58,7 +65,7 @@
     </module-components>
 
     <actions>
-        <group id="org.robovm.idea.Menu" text="RoboVM" description="RoboVM Menu">
+        <group id="org.robovm.idea.Menu" text="RoboVM" description="RoboVM menu">
             <add-to-group group-id="MainMenu" anchor="after" relative-to-action="ToolsMenu"/>
 
             <action id="org.robovm.idea.create-ipa" class="org.robovm.idea.actions.CreateIpaAction" text="Create IPA"
@@ -76,7 +83,7 @@
                     description="Deletes as files in ~/.robovm/cache folder"/>
             <separator/>
 
-            <group id="org.robovm.idea.as-fixes-new" class="org.robovm.idea.actions.ASNewGroup" text="New" description="new Project/Module workaround for Android Studio" popup="true">
+            <group id="org.robovm.idea.as-fixes-new" class="org.robovm.idea.actions.ASNewGroup" text="New" description="New project/module workaround for Android Studio" popup="true">
                 <action id="org.robovm.idea.as-fixes-new-project" class="org.robovm.idea.actions.ASNewProjectAction" text="Project..."/>
                 <action id="org.robovm.idea.as-fixes-new-module" class="org.robovm.idea.actions.ASNewModuleAction" text="Module..."/>
             </group>
