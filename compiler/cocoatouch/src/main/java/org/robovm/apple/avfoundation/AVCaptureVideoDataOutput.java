@@ -38,6 +38,8 @@ import org.robovm.apple.coremedia.*;
 import org.robovm.apple.corevideo.*;
 import org.robovm.apple.mediatoolbox.*;
 import org.robovm.apple.audiotoolbox.*;
+import org.robovm.apple.coremidi.*;
+import org.robovm.apple.uikit.*;
 /*</imports>*/
 
 /*<javadoc>*/
@@ -140,6 +142,11 @@ import org.robovm.apple.audiotoolbox.*;
      */
     @Method(selector = "recommendedVideoSettingsForVideoCodecType:assetWriterOutputFileType:")
     public native NSDictionary<NSString, ?> getRecommendedVideoSettings(AVVideoCodecType videoCodecType, String outputFileType);
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Method(selector = "recommendedVideoSettingsForVideoCodecType:assetWriterOutputFileType:outputFileURL:")
+    public native NSDictionary<NSString, ?> getRecommendedVideoSettings(AVVideoCodecType videoCodecType, String outputFileType, NSURL outputFileURL);
     @Method(selector = "new")
     protected static native @Pointer long create();
     /*</methods>*/

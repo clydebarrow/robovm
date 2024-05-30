@@ -32,7 +32,6 @@ enums:
     MTLStoreAction: {}
     MTLDataType: {}
     MTLArgumentType: {}
-    MTLArgumentAccess: {}
     MTLBlendFactor: {}
     MTLBlendOperation: {}
     MTLColorWriteMask: {}
@@ -97,6 +96,26 @@ enums:
     MTLTextureCompressionType: {} #since 15.0
     MTLMotionBorderMode: {} #since 15.0
     MTLAccelerationStructureInstanceDescriptorType: {} #since 15.0
+
+    MTLBindingType: {} #since 14.0
+    MTLLibraryOptimizationLevel: {} #since 16.0
+    MTLIOCompressionMethod: {}
+    MTLSparsePageSize: {} #since 16.0
+    MTLAccelerationStructureRefitOptions: {prefix: MTLAccelerationStructureRefitOption} #since 16.0
+    MTLIOPriority: {} #since 16.0
+    MTLIOCommandQueueType: {} #since 16.0
+    MTLIOError: {nserror: true} #since 16.0
+    MTLIOStatus: {} #since 16.0
+    MTLIOCompressionStatus: {} #since 16.0
+
+    MTLBindingAccess: {
+        prefix: MTLBindingAccess,
+        ignore: "MTLArgumentAccess(.*)"
+    }
+    MTLCompileSymbolVisibility: { } #since 16.4
+    MTLCurveType: { } #since 17.0
+    MTLCurveBasis: { } #since 17.0
+    MTLCurveEndCaps: { } #since 17.0
 classes:
     MTLAttribute: {}
     MTLFunctionConstant: {}
@@ -158,6 +177,11 @@ classes:
     MTLAccelerationStructureInstanceDescriptor: {}
     MTLAccelerationStructureUserIDInstanceDescriptor: {} #since 15.0
     MTLAccelerationStructureMotionInstanceDescriptor: {} #since 15.0
+    MTLResourceID: {} #since 16.0
+    MTLIOCompressionContext:
+        extends: NativeObject
+    MTLIndirectAccelerationStructureInstanceDescriptor: {} #since 17.0
+    MTLIndirectAccelerationStructureMotionInstanceDescriptor: {} #since 17.0
 
     MTLArgument: {} # DONE
     MTLArrayType: # DONE
@@ -387,6 +411,18 @@ classes:
     MTLMotionKeyframeData: {} #since 15.0
     MTLRenderPipelineFunctionsDescriptor: {} #since 15.0
     MTLStitchedLibraryDescriptor: {} #since 15.0
+    MTLAccelerationStructurePassDescriptor: {} #since 16.0
+    MTLAccelerationStructurePassSampleBufferAttachmentDescriptor: {} #since 16.0
+    MTLAccelerationStructurePassSampleBufferAttachmentDescriptorArray: #since 16.0
+        methods:
+            '-setObject:atIndexedSubscript:':
+                name: setObject
+    MTLIOCommandQueueDescriptor: {} #since 16.0
+    MTLMeshRenderPipelineDescriptor: {} #since 16.0
+    MTLAccelerationStructureCurveGeometryDescriptor: {} #since 17.0
+    MTLAccelerationStructureMotionCurveGeometryDescriptor: {} #since 17.0
+    MTLArchitecture: {} #since 17.0
+    MTLIndirectInstanceAccelerationStructureDescriptor: {} #since 17.0
 protocols:
     MTLHeap:
         methods:
@@ -400,6 +436,14 @@ protocols:
                 name: newBuffer
             '-newTextureWithDescriptor:offset:':
                 name: newTexture
+            '-newAccelerationStructureWithSize:':
+                name: newAccelerationStructure
+            '-newAccelerationStructureWithDescriptor:':
+                name: newAccelerationStructure
+            '-newAccelerationStructureWithSize:offset:':
+                name: newAccelerationStructure
+            '-newAccelerationStructureWithDescriptor:offset:':
+                name: newAccelerationStructure
     MTLFence: {}
 
 
@@ -499,6 +543,8 @@ protocols:
                 name: blitCommandEncoder
             '-resourceStateCommandEncoderWithDescriptor:':
                 name: resourceStateCommandEncoder
+            '-accelerationStructureCommandEncoderWithDescriptor:':
+                name: accelerationStructureCommandEncoder
     MTLCommandEncoder: # DONE
         methods:
             '-insertDebugSignpost:':
@@ -599,6 +645,15 @@ protocols:
                 name: setAccelerationStructure
             '-sampleCountersInBuffer:atSampleIndex:withBarrier:':
                 name: sampleCountersInBuffer
+            '-setBuffer:offset:attributeStride:atIndex:':
+                name: setBuffer
+            '-setBuffers:offsets:attributeStrides:withRange:':
+                name: setBuffers
+            '-setBufferOffset:attributeStride:atIndex:':
+                name: setBufferOffset
+            '-setBytes:length:attributeStride:atIndex:':
+                name: setBytes
+
     MTLComputePipelineState: # DONE
         class: true
         annotations: ['@NativeProtocolProxy']
@@ -730,6 +785,26 @@ protocols:
                 name: newLibrary
             '-newLibraryWithStitchedDescriptor:completionHandler:':
                 name: newLibrary
+            '-newIOHandleWithURL:error:':
+                name: newIOHandle
+            '-newIOCommandQueueWithDescriptor:error:':
+                name: newIOCommandQueue
+            '-newIOHandleWithURL:compressionMethod:error:':
+                name: newIOHandle
+            '-sparseTileSizeWithTextureType:pixelFormat:sampleCount:sparsePageSize:':
+                name: sparseTileSize
+            '-newArgumentEncoderWithBufferBinding:':
+                name: newArgumentEncoder
+            '-heapAccelerationStructureSizeAndAlignWithSize:':
+                name: heapAccelerationStructureSizeAndAlign
+            '-heapAccelerationStructureSizeAndAlignWithDescriptor:':
+                name: heapAccelerationStructureSizeAndAlign
+            '-newIOFileHandleWithURL:error:':
+                name: newIOFileHandle
+                throws: NSErrorException
+            '-newIOFileHandleWithURL:compressionMethod:error:':
+                name: newIOFileHandle
+                throws: NSErrorException
     MTLDrawable: # DONE
         methods:
             '-presentAtTime:':
@@ -986,6 +1061,66 @@ protocols:
                 name: setTileIntersectionFunctionTables
             '-setTileAccelerationStructure:atBufferIndex:':
                 name: setTileAccelerationStructure
+            '-setObjectBytes:length:atIndex:':
+                name: setObjectBytes
+            '-setObjectBuffer:offset:atIndex:':
+                name: setObjectBuffer
+            '-setObjectBufferOffset:atIndex:':
+                name: setObjectBufferOffset
+            '-setObjectBuffers:offsets:withRange:':
+                name: setObjectBuffers
+            '-setObjectTexture:atIndex:':
+                name: setObjectTexture
+            '-setObjectTextures:withRange:':
+                name: setObjectTextures
+            '-setObjectSamplerState:atIndex:':
+                name: setObjectSamplerState
+            '-setObjectSamplerStates:withRange:':
+                name: setObjectSamplerStates
+            '-setObjectSamplerState:lodMinClamp:lodMaxClamp:atIndex:':
+                name: setObjectSamplerState
+            '-setObjectSamplerStates:lodMinClamps:lodMaxClamps:withRange:':
+                name: setObjectSamplerStates
+            '-setObjectThreadgroupMemoryLength:atIndex:':
+                name: setObjectThreadgroupMemoryLength
+            '-setMeshBytes:length:atIndex:':
+                name: setMeshBytes
+            '-setMeshBuffer:offset:atIndex:':
+                name: setMeshBuffer
+            '-setMeshBufferOffset:atIndex:':
+                name: setMeshBufferOffset
+            '-setMeshBuffers:offsets:withRange:':
+                name: setMeshBuffers
+            '-setMeshTexture:atIndex:':
+                name: setMeshTexture
+            '-setMeshTextures:withRange:':
+                name: setMeshTextures
+            '-setMeshSamplerState:atIndex:':
+                name: setMeshSamplerState
+            '-setMeshSamplerStates:withRange:':
+                name: setMeshSamplerStates
+            '-setMeshSamplerState:lodMinClamp:lodMaxClamp:atIndex:':
+                name: setMeshSamplerState
+            '-setMeshSamplerStates:lodMinClamps:lodMaxClamps:withRange:':
+                name: setMeshSamplerStates
+            '-drawMeshThreadgroups:threadsPerObjectThreadgroup:threadsPerMeshThreadgroup:':
+                name: drawMeshThreadgroups
+            '-drawMeshThreads:threadsPerObjectThreadgroup:threadsPerMeshThreadgroup:':
+                name: drawMeshThreads
+            '-drawMeshThreadgroupsWithIndirectBuffer:indirectBufferOffset:threadsPerObjectThreadgroup:threadsPerMeshThreadgroup:':
+                name: drawMeshThreadgroups
+            '-memoryBarrierWithScope:afterStages:beforeStages:':
+                name: memoryBarrier
+            '-memoryBarrierWithResources:count:afterStages:beforeStages:':
+                name: memoryBarrier
+            '-setVertexBuffer:offset:attributeStride:atIndex:':
+                name: setVertexBuffer
+            '-setVertexBuffers:offsets:attributeStrides:withRange:':
+                name: setVertexBuffers
+            '-setVertexBufferOffset:attributeStride:atIndex:':
+                name: setVertexBufferOffset
+            '-setVertexBytes:length:attributeStride:atIndex:':
+                name: setVertexBytes
     MTLRenderPipelineState: # DONE
         class: true
         annotations: ['@NativeProtocolProxy']
@@ -1100,6 +1235,18 @@ protocols:
                 trim_after_first_colon: true
             '-drawIndexedPrimitives:indexCount:indexType:indexBuffer:indexBufferOffset:instanceCount:baseVertex:baseInstance:':
                 trim_after_first_colon: true
+            '-setVertexBuffer:offset:attributeStride:atIndex:':
+                name: setVertexBuffer
+            '-setObjectThreadgroupMemoryLength:atIndex:':
+                name: setObjectThreadgroupMemoryLength
+            '-setObjectBuffer:offset:atIndex:':
+                name: setObjectBuffer
+            '-setMeshBuffer:offset:atIndex:':
+                name: setMeshBuffer
+            '-drawMeshThreadgroups:threadsPerObjectThreadgroup:threadsPerMeshThreadgroup:':
+                name: drawMeshThreadgroups
+            '-drawMeshThreads:threadsPerObjectThreadgroup:threadsPerMeshThreadgroup:':
+                name: drawMeshThreads
     MTLSharedEvent: #since 12.0
         methods:
             '-notifyListener:atValue:block:':
@@ -1116,6 +1263,8 @@ protocols:
                 name: setThreadgroupMemoryLength
             '-setImageblockWidth:height:':
                 name: setImageblockWidth
+            '-setKernelBuffer:offset:attributeStride:atIndex:':
+                name: setKernelBuffer
     MTLRasterizationRateMap: #since 13.0
         methods:
             '-copyParameterDataToBuffer:offset:':
@@ -1132,6 +1281,8 @@ protocols:
                 name: updateTextureMapping
             '-updateTextureMapping:mode:indirectBuffer:indirectBufferOffset:':
                 name: updateTextureMapping
+            '-moveTextureMappingsFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toTexture:destinationSlice:destinationLevel:destinationOrigin:':
+                name: moveTextureMappings
     MTLAccelerationStructure: {} #since 14.0
     MTLAccelerationStructureCommandEncoder: #since 14.0
         methods:
@@ -1155,6 +1306,8 @@ protocols:
                 name: sampleCountersInBuffer
             '-writeCompactedAccelerationStructureSize:toBuffer:offset:sizeDataType:':
                 name: writeCompactedAccelerationStructure
+            '-refitAccelerationStructure:descriptor:destination:scratchBuffer:scratchBufferOffset:options:':
+                name: refitAccelerationStructure
     MTLBinaryArchive: #since 14.0
         methods:
             '-addComputePipelineFunctionsWithDescriptor:error:':
@@ -1198,6 +1351,10 @@ protocols:
                 name: setVisibleFunctionTable
             '-setVisibleFunctionTables:withBufferRange:':
                 name: setVisibleFunctionTables
+            '-setOpaqueCurveIntersectionFunctionWithSignature:atIndex:':
+                name: setOpaqueCurveIntersectionFunction
+            '-setOpaqueCurveIntersectionFunctionWithSignature:withRange:':
+                name: setOpaqueCurveIntersectionFunction
     MTLLogContainer: {} #since 14.0
     MTLVisibleFunctionTable: #since 14.0
         methods:
@@ -1207,6 +1364,35 @@ protocols:
                 name: setFunctions
     MTLFunctionStitchingAttribute: {} #since 15.0
     MTLFunctionStitchingNode: {} #since 15.0
+    MTLBinding: {} #since 16.0
+    MTLBufferBinding: {} #since 16.0
+    MTLIOCommandBuffer: #since 16.0
+        methods:
+            '-loadBytes:size:sourceHandle:sourceHandleOffset:':
+                name: loadBytes
+            '-loadBuffer:offset:size:sourceHandle:sourceHandleOffset:':
+                name: loadBuffer
+            '-loadTexture:slice:level:size:sourceBytesPerRow:sourceBytesPerImage:destinationOrigin:sourceHandle:sourceHandleOffset:':
+                name: loadTexture
+            '-copyStatusToBuffer:offset:':
+                name: copyStatus
+            '-waitForEvent:value:':
+                name: waitForEvent
+            '-signalEvent:value:':
+                name: signalEvent
+    MTLIOCommandQueue: #since 16.0
+        methods:
+            '-commandBufferWithUnretainedReferences':
+                name: commandBufferWithUnretainedReferences
+    MTLIOFileHandle: {} #since 16.0
+    MTLIOScratchBuffer: {} #since 16.0
+    MTLIOScratchBufferAllocator: #since 16.0
+        methods:
+            '-newScratchBufferWithMinimumSize:':
+                name: newScratchBuffer
+    MTLObjectPayloadBinding: {} #since 16.0
+    MTLTextureBinding: {} #since 16.0
+    MTLThreadgroupBinding: {} #since 16.0
 functions:
     MTLClearColorMake:
         exclude: true # use constructor instead
@@ -1214,6 +1400,23 @@ functions:
         class: MTLDevice
         name: 'get#{g[0]}'
         return_marshaler: NSObject.NoRetainMarshaler
+
+    MTLIOCompressionContextDefaultChunkSize:
+        class: MTLIOCompressionContext
+        name: getDefaultChunkSize
+    MTLIOCreateCompressionContext:
+        class: MTLIOCompressionContext
+        name: create
+        parameters:
+            0:
+                type: String
+                marshaler: StringMarshalers.AsAsciiZMarshaler
+    MTLIOCompressionContextAppendData:
+        class: MTLIOCompressionContext
+        name: appendData
+    MTLIOFlushAndDestroyCompressionContext:
+        class: MTLIOCompressionContext
+        name: flushAndDestroy
 
     # Make sure we don't miss any functions if new ones are introduced in a later version
     (k?MTL.*):
@@ -1246,6 +1449,9 @@ values:
     MTLCommandBufferEncoderInfoErrorKey:
         class: MTLCommandBufferError
         name: getEncoderInfoErrorKey
+    MTLIOErrorDomain:
+        class: MTLIOError
+        name: getClassDomain
 
     # Make sure we don't miss any values if new ones are introduced in a later version
     (k?MTL.*):

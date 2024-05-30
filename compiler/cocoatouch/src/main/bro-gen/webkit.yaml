@@ -27,6 +27,9 @@ enums:
     WKPermissionDecision: {} #since 15.0
     WKMediaCaptureType: {} #since 15.0
     WKFullscreenState: {} #since 15.0
+    WKDialogResult: {} #since 16.0
+    WKCookiePolicy: {} #since 17.0
+    WKInactiveSchedulingPolicy: {} #since 17.0
 categories:
     NSAttributedString:
         methods:
@@ -138,6 +141,8 @@ classes:
                 property: true
                 return_type: Set<WKWebsiteDataType>
                 return_marshaler: WKWebsiteDataType.AsSetMarshaler
+            '+removeDataStoreForIdentifier:completionHandler:':
+                name: removeDataStore
     WKWebView: # DONE
         annotations: ['@WeaklyLinked']
         properties:
@@ -210,6 +215,8 @@ classes:
                 name: loadSimulatedRequest
             '-loadSimulatedRequest:withResponseHTMLString:':
                 name: loadSimulatedReques
+            '-setMinimumViewportInset:maximumViewportInset:':
+                name: setMinimumViewportInset
     WKPreviewElementInfo: {}
     WKContentRuleList: {} #since 11.0
     WKContentRuleListStore: #since 11.0
@@ -229,6 +236,8 @@ classes:
                 trim_after_first_colon: true
             '-deleteCookie:completionHandler:':
                 trim_after_first_colon: true
+            '-setCookiePolicy:completionHandler:':
+                name: setCookiePolicy
     WKSnapshotConfiguration: {} #since 11.0
     WKContextMenuElementInfo: {} #since 13.0
     WKWebpagePreferences: {} #since 13.0
@@ -306,6 +315,12 @@ protocols:
                 name: requestMediaCapturePermission
             '-webView:requestDeviceOrientationAndMotionPermissionForOrigin:initiatedByFrame:decisionHandler:':
                 name: requestDeviceOrientationAndMotionPermission
+            '-webView:showLockdownModeFirstUseMessage:completionHandler:':
+                name: showLockdownModeFirstUseMessage
+            '-webView:willPresentEditMenuWithAnimator:':
+                name: willPresentEditMenu
+            '-webView:willDismissEditMenuWithAnimator:':
+                name: willDismissEditMenu
     WKHTTPCookieStoreObserver: {} #since 11.0
     WKPreviewActionItem: {} #since 10.0
     WKURLSchemeHandler: #since 11.0
@@ -353,6 +368,9 @@ values:
     WKPreviewActionItemIdentifier(.*):
         class: WKPreviewActionItemIdentifiers
         name: '#{g[0]}'
+
+    NSReadAccessURLDocumentOption:
+        exclude: true # FIXME: it extends NSAttributedStringDocumentReadingOptionKey that is defined in different framework
 
     # Make sure we don't miss any values if new ones are introduced in a later version
     (k?WK.*):

@@ -57,6 +57,10 @@ classes:
             '-initWithTemplateImage:extensionIdentifier:':
                 name: init
     SFSafariViewControllerPrewarmingToken: {} #since 15.0
+    SFSafariViewControllerDataStore: #since 16.0
+        methods:
+            '-clearWebsiteDataWithCompletionHandler:':
+                name: clearWebsiteData
 protocols:
     SFSafariViewControllerDelegate: # DONE
         methods:
@@ -96,6 +100,9 @@ values:
     SFExtensionMessageKey:
         class: SFSafariViewController
         name: getExtensionMessageKey
+    SFExtensionProfileKey:
+        class: SFSafariViewController
+        name: getExtensionProfileKey
 
     # Make sure we don't miss any values if new ones are introduced in a later version
     (k?SS.*):

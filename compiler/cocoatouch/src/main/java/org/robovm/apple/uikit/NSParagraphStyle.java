@@ -39,6 +39,7 @@ import org.robovm.apple.fileprovider.*;
 import org.robovm.apple.intents.*;
 import org.robovm.apple.usernotifications.*;
 import org.robovm.apple.linkpresentation.*;
+import org.robovm.apple.symbols.*;
 /*</imports>*/
 
 /*<javadoc>*/
@@ -97,6 +98,8 @@ import org.robovm.apple.linkpresentation.*;
     public native NSArray<NSTextTab> getTabStops();
     @Property(selector = "defaultTabInterval")
     public native @MachineSizedFloat double getDefaultTabInterval();
+    @Property(selector = "textLists")
+    public native NSArray<NSTextList> getTextLists();
     /**
      * @since Available in iOS 9.0 and later.
      */

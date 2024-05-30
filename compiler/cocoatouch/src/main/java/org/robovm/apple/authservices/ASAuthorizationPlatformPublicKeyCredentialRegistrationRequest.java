@@ -52,6 +52,16 @@ import org.robovm.apple.coreanimation.*;
     protected ASAuthorizationPlatformPublicKeyCredentialRegistrationRequest(SkipInit skipInit) { super(skipInit); }
     /*</constructors>*/
     /*<properties>*/
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "largeBlob")
+    public native ASAuthorizationPublicKeyCredentialLargeBlobRegistrationInput getLargeBlob();
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "setLargeBlob:")
+    public native void setLargeBlob(ASAuthorizationPublicKeyCredentialLargeBlobRegistrationInput v);
     @Property(selector = "relyingPartyIdentifier")
     public native String getRelyingPartyIdentifier();
     @Property(selector = "userID")
@@ -71,13 +81,13 @@ import org.robovm.apple.coreanimation.*;
     @Property(selector = "setChallenge:")
     public native void setChallenge(NSData v);
     @Property(selector = "userVerificationPreference")
-    public native String getUserVerificationPreference();
+    public native ASAuthorizationPublicKeyCredentialUserVerificationPreference getUserVerificationPreference();
     @Property(selector = "setUserVerificationPreference:")
-    public native void setUserVerificationPreference(String v);
+    public native void setUserVerificationPreference(ASAuthorizationPublicKeyCredentialUserVerificationPreference v);
     @Property(selector = "attestationPreference")
-    public native String getAttestationPreference();
+    public native ASAuthorizationPublicKeyCredentialAttestationKind getAttestationPreference();
     @Property(selector = "setAttestationPreference:")
-    public native void setAttestationPreference(String v);
+    public native void setAttestationPreference(ASAuthorizationPublicKeyCredentialAttestationKind v);
     @Property(selector = "supportsSecureCoding")
     public static native boolean supportsSecureCoding();
     /*</properties>*/

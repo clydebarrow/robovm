@@ -33,6 +33,7 @@ import org.robovm.apple.coreimage.*;
 import org.robovm.apple.coretext.*;
 import org.robovm.apple.opengles.*;
 import org.robovm.apple.metal.*;
+import org.robovm.apple.corevideo.*;
 /*</imports>*/
 
 /*<javadoc>*/
@@ -89,5 +90,7 @@ import org.robovm.apple.metal.*;
     public static native NSObject get(CATransactionProperty key);
     @Method(selector = "setValue:forKey:")
     protected static native void set(NSObject anObject, CATransactionProperty key);
+    @Method(selector = "batch")
+    public static native void batch();
     /*</methods>*/
 }

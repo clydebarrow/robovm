@@ -31,6 +31,8 @@ import org.robovm.apple.foundation.*;
 import org.robovm.apple.uikit.*;
 import org.robovm.apple.coregraphics.*;
 import org.robovm.apple.coreanimation.*;
+import org.robovm.apple.coremedia.*;
+import org.robovm.apple.avfoundation.*;
 /*</imports>*/
 
 /*<javadoc>*/
@@ -107,8 +109,16 @@ import org.robovm.apple.coreanimation.*;
     @Deprecated
     @Property(selector = "isWirelessRouteActive")
     public native boolean isWirelessRouteActive();
+    /**
+     * @deprecated Deprecated in iOS 17.0. This is no longer supported
+     */
+    @Deprecated
     @Property(selector = "volumeWarningSliderImage")
     public native UIImage getVolumeWarningSliderImage();
+    /**
+     * @deprecated Deprecated in iOS 17.0. This is no longer supported
+     */
+    @Deprecated
     @Property(selector = "setVolumeWarningSliderImage:")
     public native void setVolumeWarningSliderImage(UIImage v);
     @WeaklyLinked

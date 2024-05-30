@@ -39,6 +39,7 @@ import org.robovm.apple.fileprovider.*;
 import org.robovm.apple.intents.*;
 import org.robovm.apple.usernotifications.*;
 import org.robovm.apple.linkpresentation.*;
+import org.robovm.apple.symbols.*;
 /*</imports>*/
 
 /*<javadoc>*/
@@ -47,7 +48,7 @@ import org.robovm.apple.linkpresentation.*;
 /*<annotations>*/@Library("UIKit") @NativeClass/*</annotations>*/
 /*<visibility>*/public/*</visibility>*/ class /*<name>*/UITabBarItem/*</name>*/ 
     extends /*<extends>*/UIBarItem/*</extends>*/ 
-    /*<implements>*/implements UISpringLoadedInteractionSupporting/*</implements>*/ {
+    /*<implements>*/implements UISpringLoadedInteractionSupporting, UIPopoverPresentationControllerSourceItem/*</implements>*/ {
 
     /*<ptr>*/public static class UITabBarItemPtr extends Ptr<UITabBarItem, UITabBarItemPtr> {}/*</ptr>*/
     /*<bind>*/static { ObjCRuntime.bind(UITabBarItem.class); }/*</bind>*/
@@ -157,5 +158,10 @@ import org.robovm.apple.linkpresentation.*;
      */
     @Method(selector = "badgeTextAttributesForState:")
     public native NSDictionary<NSString, ?> getBadgeTextAttributes(UIControlState state);
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Method(selector = "frameInView:")
+    public native @ByVal CGRect frameInView(UIView referenceView);
     /*</methods>*/
 }

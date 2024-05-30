@@ -39,6 +39,7 @@ import org.robovm.apple.fileprovider.*;
 import org.robovm.apple.intents.*;
 import org.robovm.apple.usernotifications.*;
 import org.robovm.apple.linkpresentation.*;
+import org.robovm.apple.symbols.*;
 /*</imports>*/
 
 /*<javadoc>*/
@@ -182,6 +183,16 @@ import org.robovm.apple.linkpresentation.*;
      */
     @Property(selector = "setSeparatorInsetReference:")
     public native void setSeparatorInsetReference(UITableViewSeparatorInsetReference v);
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Property(selector = "selfSizingInvalidation")
+    public native UITableViewSelfSizingInvalidation getSelfSizingInvalidation();
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Property(selector = "setSelfSizingInvalidation:")
+    public native void setSelfSizingInvalidation(UITableViewSelfSizingInvalidation v);
     @Property(selector = "backgroundView")
     public native UIView getBackgroundView();
     @Property(selector = "setBackgroundView:")

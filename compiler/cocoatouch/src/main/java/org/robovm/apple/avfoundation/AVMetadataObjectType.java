@@ -38,6 +38,8 @@ import org.robovm.apple.coremedia.*;
 import org.robovm.apple.corevideo.*;
 import org.robovm.apple.mediatoolbox.*;
 import org.robovm.apple.audiotoolbox.*;
+import org.robovm.apple.coremidi.*;
+import org.robovm.apple.uikit.*;
 /*</imports>*/
 
 /*<javadoc>*/
@@ -102,6 +104,10 @@ import org.robovm.apple.audiotoolbox.*;
      */
     public static final AVMetadataObjectType HumanBody = new AVMetadataObjectType("HumanBody");
     /**
+     * @since Available in iOS 17.0 and later.
+     */
+    public static final AVMetadataObjectType HumanFullBody = new AVMetadataObjectType("HumanFullBody");
+    /**
      * @since Available in iOS 13.0 and later.
      */
     public static final AVMetadataObjectType CatBody = new AVMetadataObjectType("CatBody");
@@ -153,7 +159,7 @@ import org.robovm.apple.audiotoolbox.*;
     public static final AVMetadataObjectType MicroPDF417Code = new AVMetadataObjectType("MicroPDF417Code");
     /*</constants>*/
     
-    private static /*<name>*/AVMetadataObjectType/*</name>*/[] values = new /*<name>*/AVMetadataObjectType/*</name>*/[] {/*<value_list>*/HumanBody, CatBody, DogBody, SalientObject, Face, UPCECode, Code39Code, Code39Mod43Code, EAN13Code, EAN8Code, Code93Code, Code128Code, PDF417Code, QRCode, AztecCode, Interleaved2of5Code, ITF14Code, DataMatrixCode, CodabarCode, GS1DataBarCode, GS1DataBarExpandedCode, GS1DataBarLimitedCode, MicroQRCode, MicroPDF417Code/*</value_list>*/};
+    private static /*<name>*/AVMetadataObjectType/*</name>*/[] values = new /*<name>*/AVMetadataObjectType/*</name>*/[] {/*<value_list>*/HumanBody, HumanFullBody, CatBody, DogBody, SalientObject, Face, UPCECode, Code39Code, Code39Mod43Code, EAN13Code, EAN8Code, Code93Code, Code128Code, PDF417Code, QRCode, AztecCode, Interleaved2of5Code, ITF14Code, DataMatrixCode, CodabarCode, GS1DataBarCode, GS1DataBarExpandedCode, GS1DataBarLimitedCode, MicroQRCode, MicroPDF417Code/*</value_list>*/};
 
     /*<name>*/AVMetadataObjectType/*</name>*/ (String getterName) {
         super(Values.class, getterName);
@@ -190,6 +196,11 @@ import org.robovm.apple.audiotoolbox.*;
          */
         @GlobalValue(symbol="AVMetadataObjectTypeHumanBody", optional=true)
         public static native NSString HumanBody();
+        /**
+         * @since Available in iOS 17.0 and later.
+         */
+        @GlobalValue(symbol="AVMetadataObjectTypeHumanFullBody", optional=true)
+        public static native NSString HumanFullBody();
         /**
          * @since Available in iOS 13.0 and later.
          */

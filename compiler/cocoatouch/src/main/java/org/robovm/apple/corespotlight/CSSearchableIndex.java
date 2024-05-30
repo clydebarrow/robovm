@@ -52,6 +52,8 @@ import org.robovm.apple.uniformtypeid.*;
     public CSSearchableIndex(String name) { super((SkipInit) null); initObject(init(name)); }
     @Method(selector = "initWithName:protectionClass:")
     public CSSearchableIndex(String name, NSString protectionClass) { super((SkipInit) null); initObject(init(name, protectionClass)); }
+    @Method(selector = "initWithName:protectionClass:bundleIdentifier:options:")
+    public CSSearchableIndex(String name, NSString protectionClass, String bundleIdentifier, @MachineSizedSInt long options) { super((SkipInit) null); initObject(init(name, protectionClass, bundleIdentifier, options)); }
     /*</constructors>*/
     /*<properties>*/
     @Property(selector = "indexDelegate")
@@ -65,6 +67,8 @@ import org.robovm.apple.uniformtypeid.*;
     protected native @Pointer long init(String name);
     @Method(selector = "initWithName:protectionClass:")
     protected native @Pointer long init(String name, NSString protectionClass);
+    @Method(selector = "initWithName:protectionClass:bundleIdentifier:options:")
+    protected native @Pointer long init(String name, NSString protectionClass, String bundleIdentifier, @MachineSizedSInt long options);
     @Method(selector = "indexSearchableItems:completionHandler:")
     public native void indexSearchableItems(NSArray<CSSearchableItem> items, @Block VoidBlock1<NSError> completionHandler);
     @Method(selector = "deleteSearchableItemsWithIdentifiers:completionHandler:")
@@ -83,5 +87,7 @@ import org.robovm.apple.uniformtypeid.*;
     public native void endIndexBatch(NSData clientState, @Block VoidBlock1<NSError> completionHandler);
     @Method(selector = "fetchLastClientStateWithCompletionHandler:")
     public native void fetchLastClientState(@Block VoidBlock2<NSData, NSError> completionHandler);
+    @Method(selector = "fetchDataForBundleIdentifier:itemIdentifier:contentType:completionHandler:")
+    public native void fetchDataForBundleIdentifier(String bundleIdentifier, String itemIdentifier, UTType contentType, @Block VoidBlock2<NSData, NSError> completionHandler);
     /*</methods>*/
 }

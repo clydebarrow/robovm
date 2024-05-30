@@ -39,6 +39,7 @@ import org.robovm.apple.fileprovider.*;
 import org.robovm.apple.intents.*;
 import org.robovm.apple.usernotifications.*;
 import org.robovm.apple.linkpresentation.*;
+import org.robovm.apple.symbols.*;
 /*</imports>*/
 
 /*<javadoc>*/
@@ -87,6 +88,16 @@ import org.robovm.apple.linkpresentation.*;
     public native void setMessage(String v);
     @Property(selector = "preferredStyle")
     public native UIAlertControllerStyle getPreferredStyle();
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Property(selector = "severity")
+    public native UIAlertControllerSeverity getSeverity();
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Property(selector = "setSeverity:")
+    public native void setSeverity(UIAlertControllerSeverity v);
     /**
      * @since Available in iOS 11.0 and later.
      */

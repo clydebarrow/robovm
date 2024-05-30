@@ -39,6 +39,7 @@ import org.robovm.apple.fileprovider.*;
 import org.robovm.apple.intents.*;
 import org.robovm.apple.usernotifications.*;
 import org.robovm.apple.linkpresentation.*;
+import org.robovm.apple.symbols.*;
 /*</imports>*/
 
 /*<javadoc>*/
@@ -140,6 +141,16 @@ import org.robovm.apple.linkpresentation.*;
      */
     @Property(selector = "toolTipInteraction")
     public native UIToolTipInteraction getToolTipInteraction();
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "isSymbolAnimationEnabled")
+    public native boolean isSymbolAnimationEnabled();
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "setSymbolAnimationEnabled:")
+    public native void setSymbolAnimationEnabled(boolean v);
     @WeaklyLinked
     @Property(selector = "layerClass")
     public static native Class<? extends CALayer> getLayerClass();
@@ -429,6 +440,16 @@ import org.robovm.apple.linkpresentation.*;
      */
     @Method(selector = "contextMenuInteraction:willEndForConfiguration:animator:")
     public native void willEnd(UIContextMenuInteraction interaction, UIContextMenuConfiguration configuration, UIContextMenuInteractionAnimating animator);
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Method(selector = "contextMenuInteraction:configuration:highlightPreviewForItemWithIdentifier:")
+    public native UITargetedPreview getHighlightPreview(UIContextMenuInteraction interaction, UIContextMenuConfiguration configuration, NSObject identifier);
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Method(selector = "contextMenuInteraction:configuration:dismissalPreviewForItemWithIdentifier:")
+    public native UITargetedPreview getDismissalPreview(UIContextMenuInteraction interaction, UIContextMenuConfiguration configuration, NSObject identifier);
     @Method(selector = "contextMenuInteraction:willPerformPreviewActionForMenuWithConfiguration:animator:")
     public native void willPerformPreviewAction(UIContextMenuInteraction interaction, UIContextMenuConfiguration configuration, UIContextMenuInteractionCommitAnimating animator);
     /*</methods>*/

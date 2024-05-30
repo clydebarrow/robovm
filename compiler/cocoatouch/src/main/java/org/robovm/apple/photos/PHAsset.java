@@ -35,6 +35,7 @@ import org.robovm.apple.avfoundation.*;
 import org.robovm.apple.coreimage.*;
 import org.robovm.apple.coremedia.*;
 import org.robovm.apple.imageio.*;
+import org.robovm.apple.uniformtypeid.*;
 /*</imports>*/
 
 /*<javadoc>*/
@@ -91,6 +92,11 @@ import org.robovm.apple.imageio.*;
      */
     @Property(selector = "sourceType")
     public native PHAssetSourceType getSourceType();
+    /**
+     * @since Available in iOS 15.0 and later.
+     */
+    @Property(selector = "hasAdjustments")
+    public native boolean hasAdjustments();
     /**
      * @since Available in iOS 15.0 and later.
      */

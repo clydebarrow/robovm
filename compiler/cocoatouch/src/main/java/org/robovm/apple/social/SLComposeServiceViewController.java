@@ -110,13 +110,52 @@ import org.robovm.apple.accounts.*;
     @Method(selector = "textViewDidChangeSelection:")
     public native void didChangeSelection(UITextView textView);
     /**
-     * @since Available in iOS 10.0 and later.
+     * @since Available in iOS 16.0 and later.
      */
+    @Method(selector = "textView:editMenuForTextInRange:suggestedActions:")
+    public native UIMenu getEditMenu(UITextView textView, @ByVal NSRange range, NSArray<UIMenuElement> suggestedActions);
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Method(selector = "textView:willPresentEditMenuWithAnimator:")
+    public native void willPresentEditMenu(UITextView textView, UIEditMenuInteractionAnimating animator);
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Method(selector = "textView:willDismissEditMenuWithAnimator:")
+    public native void willDismissEditMenu(UITextView textView, UIEditMenuInteractionAnimating animator);
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Method(selector = "textView:primaryActionForTextItem:defaultAction:")
+    public native UIAction getPrimaryActionForTextItem(UITextView textView, UITextItem textItem, UIAction defaultAction);
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Method(selector = "textView:menuConfigurationForTextItem:defaultMenu:")
+    public native UITextItemMenuConfiguration getMenuConfigurationForTextItem(UITextView textView, UITextItem textItem, UIMenu defaultMenu);
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Method(selector = "textView:textItemMenuWillDisplayForTextItem:animator:")
+    public native void textItemMenuWillDisplayForTextItem(UITextView textView, UITextItem textItem, UIContextMenuInteractionAnimating animator);
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Method(selector = "textView:textItemMenuWillEndForTextItem:animator:")
+    public native void textItemMenuWillEndForTextItem(UITextView textView, UITextItem textItem, UIContextMenuInteractionAnimating animator);
+    /**
+     * @since Available in iOS 10.0 and later.
+     * @deprecated Deprecated in iOS 17.0. Replaced by primaryActionForTextItem: and menuConfigurationForTextItem: for additional customization options.
+     */
+    @Deprecated
     @Method(selector = "textView:shouldInteractWithURL:inRange:interaction:")
     public native boolean shouldInteractWithURL(UITextView textView, NSURL URL, @ByVal NSRange characterRange, UITextItemInteraction interaction);
     /**
      * @since Available in iOS 10.0 and later.
+     * @deprecated Deprecated in iOS 17.0. Replaced by primaryActionForTextItem: and menuConfigurationForTextItem: for additional customization options.
      */
+    @Deprecated
     @Method(selector = "textView:shouldInteractWithTextAttachment:inRange:interaction:")
     public native boolean shouldInteractWithTextAttachment(UITextView textView, NSTextAttachment textAttachment, @ByVal NSRange characterRange, UITextItemInteraction interaction);
     /**

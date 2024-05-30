@@ -1,6 +1,7 @@
 plugins {
-    id "com.github.johnrengelman.shadow" version "7.1.0"
-    id 'java'
+    id "com.github.johnrengelman.shadow" version "8.1.1"
+    id "com.gradle.plugin-publish" version "1.2.1"
+    id 'java-gradle-plugin'
     id 'groovy'
     id 'maven-publish'
     id 'signing'
@@ -10,7 +11,7 @@ plugins {
 
 group = 'com.mobidevelop.robovm'
 archivesBaseName = 'robovm-gradle-plugin'
-version = '2.3.19-SNAPSHOT'
+version = '2.3.22-SNAPSHOT'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -20,7 +21,7 @@ compileJava {
 }
 
 ext {
-    roboVMVersion = '2.3.19-SNAPSHOT'
+    roboVMVersion = '2.3.22-SNAPSHOT'
     nexusUsername = System.getenv('MAVEN_USERNAME')
     nexusPassword = System.getenv('MAVEN_PASSWORD')
 }
@@ -34,7 +35,7 @@ repositories {
 dependencies {
     compileOnly gradleApi()
     compileOnly localGroovy()
-    implementation "org.apache.commons:commons-compress:1.5"
+    implementation "org.apache.commons:commons-compress:1.22"
     implementation "com.mobidevelop.robovm:robovm-compiler:${roboVMVersion}"
     implementation 'org.sonatype.aether:aether:1.13.1'
     implementation 'org.sonatype.aether:aether-connector-wagon:1.13.1'
@@ -44,13 +45,22 @@ dependencies {
     testImplementation group: 'junit', name: 'junit', version: '4.11'
 }
 
+gradlePlugin {
+    website = "https://mobivm.github.io"
+    vcsUrl = "https://github.com/MobiVM/robovm"
+    plugins {
+        create("robovm") {
+            id = "com.mobidevelop.robovm"
+            implementationClass = "org.robovm.gradle.RoboVMPlugin"
+            displayName = "RoboVM Gradle Plugin"
+            description = "The RoboVM Gradle Plugin provides a way to build RoboVM apps using Gradle."
+        }
+    }
+}
+
 publishing {
     publications {
-        mavenJava(MavenPublication) {
-            groupId = 'com.mobidevelop.robovm'
-            artifactId = 'robovm-gradle-plugin'
-            from components.java
-
+        pluginMaven(MavenPublication) {
             pom {
                 name = 'RoboVM Gradle Plugin'
                 packaging = 'jar'
@@ -103,20 +113,26 @@ java {
 }
 
 shadowJar {
-    classifier = ''
-    dependencies {
-        exclude(dependency("com.mobidevelop.robovm:robovm-compiler:${roboVMVersion}"));
-    }
+    archiveClassifier.set('')
     relocate 'org.apache.http', 'com.mobidevelop.robovm.org.apache.http'
     relocate 'org.apache.commons.io', 'com.mobidevelop.robovm.org.apache.commons.io'
     relocate 'org.objectweb.asm', 'com.mobidevelop.robovm.asm'
 }
 
+// suppress "warning: no comment"
+tasks.withType(Javadoc) {
+    options.addBooleanOption("Xdoclint:-missing", true)
+}
+
 signing {
     required { !version.endsWith('SNAPSHOT') && gradle.taskGraph.hasTask("publish") }
-    sign publishing.publications.mavenJava
+    sign publishing.publications.pluginMaven
 }
 
 assemble.dependsOn('shadowJar')
 publishToMavenLocal.dependsOn('shadowJar')
 publish.dependsOn('shadowJar')
+
+tasks.withType(AbstractPublishToMaven).configureEach {
+    dependsOn(tasks.withType(Sign))
+}

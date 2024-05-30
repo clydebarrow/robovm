@@ -39,6 +39,7 @@ import org.robovm.apple.fileprovider.*;
 import org.robovm.apple.intents.*;
 import org.robovm.apple.usernotifications.*;
 import org.robovm.apple.linkpresentation.*;
+import org.robovm.apple.symbols.*;
 /*</imports>*/
 
 /*<javadoc>*/
@@ -72,6 +73,16 @@ import org.robovm.apple.linkpresentation.*;
     public native UIMenuIdentifier getIdentifier();
     @Property(selector = "options")
     public native UIMenuOptions getOptions();
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Property(selector = "preferredElementSize")
+    public native UIMenuElementSize getPreferredElementSize();
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Property(selector = "setPreferredElementSize:")
+    public native void setPreferredElementSize(UIMenuElementSize v);
     @Property(selector = "children")
     public native NSArray<UIMenuElement> getChildren();
     /**

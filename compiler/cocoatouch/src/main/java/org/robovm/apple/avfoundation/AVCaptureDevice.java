@@ -38,6 +38,8 @@ import org.robovm.apple.coremedia.*;
 import org.robovm.apple.corevideo.*;
 import org.robovm.apple.mediatoolbox.*;
 import org.robovm.apple.audiotoolbox.*;
+import org.robovm.apple.coremidi.*;
+import org.robovm.apple.uikit.*;
 /*</imports>*/
 
 /*<javadoc>*/
@@ -132,6 +134,21 @@ import org.robovm.apple.audiotoolbox.*;
      */
     @Property(selector = "deviceType")
     public native String getDeviceType();
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "userPreferredCamera")
+    public static native AVCaptureDevice getUserPreferredCamera();
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "setUserPreferredCamera:")
+    public static native void setUserPreferredCamera(AVCaptureDevice v);
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "systemPreferredCamera")
+    public static native AVCaptureDevice getSystemPreferredCamera();
     /**
      * @since Available in iOS 11.1 and later.
      */
@@ -479,6 +496,16 @@ import org.robovm.apple.audiotoolbox.*;
     @Property(selector = "isCenterStageActive")
     public native boolean isCenterStageActive();
     /**
+     * @since Available in iOS 16.4 and later.
+     */
+    @Property(selector = "centerStageRectOfInterest")
+    public native @ByVal CGRect getCenterStageRectOfInterest();
+    /**
+     * @since Available in iOS 16.4 and later.
+     */
+    @Property(selector = "setCenterStageRectOfInterest:")
+    public native void setCenterStageRectOfInterest(@ByVal CGRect v);
+    /**
      * @since Available in iOS 15.0 and later.
      */
     @Property(selector = "isPortraitEffectEnabled")
@@ -489,6 +516,41 @@ import org.robovm.apple.audiotoolbox.*;
     @Property(selector = "isPortraitEffectActive")
     public native boolean isPortraitEffectActive();
     /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "reactionEffectsEnabled")
+    public static native boolean isReactionEffectsEnabled();
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "reactionEffectGesturesEnabled")
+    public static native boolean isReactionEffectGesturesEnabled();
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "canPerformReactionEffects")
+    public native boolean canPerformReactionEffects();
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "availableReactionTypes")
+    public native NSSet<NSString> getAvailableReactionTypes();
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "reactionEffectsInProgress")
+    public native NSArray<AVCaptureReactionEffectState> getReactionEffectsInProgress();
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Property(selector = "isContinuityCamera")
+    public native boolean isContinuityCamera();
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Property(selector = "companionDeskViewCamera")
+    public native AVCaptureDevice getCompanionDeskViewCamera();
+    /**
      * @since Available in iOS 15.0 and later.
      */
     @Property(selector = "preferredMicrophoneMode")
@@ -498,6 +560,16 @@ import org.robovm.apple.audiotoolbox.*;
      */
     @Property(selector = "activeMicrophoneMode")
     public static native AVCaptureMicrophoneMode getActiveMicrophoneMode();
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Property(selector = "isStudioLightEnabled")
+    public static native boolean isStudioLightEnabled();
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Property(selector = "isStudioLightActive")
+    public native boolean isStudioLightActive();
     /*</properties>*/
     /*<members>*//*</members>*/
     /*<methods>*/
@@ -611,6 +683,11 @@ import org.robovm.apple.audiotoolbox.*;
      */
     @Method(selector = "extrinsicMatrixFromDevice:toDevice:")
     public static native NSData getExtrinsicMatrix(AVCaptureDevice fromDevice, AVCaptureDevice toDevice);
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Method(selector = "performEffectForReaction:")
+    public native void performEffectForReaction(AVCaptureReactionType reactionType);
     /**
      * @since Available in iOS 15.0 and later.
      */

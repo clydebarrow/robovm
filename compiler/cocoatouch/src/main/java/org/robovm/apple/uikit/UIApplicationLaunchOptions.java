@@ -39,6 +39,7 @@ import org.robovm.apple.fileprovider.*;
 import org.robovm.apple.intents.*;
 import org.robovm.apple.usernotifications.*;
 import org.robovm.apple.linkpresentation.*;
+import org.robovm.apple.symbols.*;
 /*</imports>*/
 
 /*<javadoc>*/
@@ -158,6 +159,10 @@ import org.robovm.apple.linkpresentation.*;
         set(Keys.LocalNotification(), localNotification);
         return this;
     }
+    /**
+     * @deprecated Deprecated in iOS 16.0. This dictionary key is no longer used.
+     */
+    @Deprecated
     public NSObject getAnnotation() {
         if (has(Keys.Annotation())) {
             NSObject val = (NSObject) get(Keys.Annotation());
@@ -165,6 +170,10 @@ import org.robovm.apple.linkpresentation.*;
         }
         return null;
     }
+    /**
+     * @deprecated Deprecated in iOS 16.0. This dictionary key is no longer used.
+     */
+    @Deprecated
     public UIApplicationLaunchOptions setAnnotation(NSObject annotation) {
         set(Keys.Annotation(), annotation);
         return this;
@@ -269,6 +278,10 @@ import org.robovm.apple.linkpresentation.*;
         @Deprecated
         @GlobalValue(symbol="UIApplicationLaunchOptionsLocalNotificationKey", optional=true)
         public static native NSString LocalNotification();
+        /**
+         * @deprecated Deprecated in iOS 16.0. This dictionary key is no longer used.
+         */
+        @Deprecated
         @GlobalValue(symbol="UIApplicationLaunchOptionsAnnotationKey", optional=true)
         public static native NSString Annotation();
         @GlobalValue(symbol="UIApplicationLaunchOptionsLocationKey", optional=true)

@@ -1,12 +1,12 @@
-<idea-plugin url="https://github.com/robovm/robovm-idea">
+<idea-plugin url="https://github.com/MobiVM/robovm">
     <id>com.mobidevelop.robovm.intellij</id>
     <version>${project.version}</version>
-    <vendor email="robovm@mobidevelop.com" url="https://github.com/MobiVM/robovm">MobiVM</vendor>
+    <vendor email="tom@asidik.com" url="https://mobivm.github.io">MobiVM</vendor>
 
     <depends optional="true" config-file="com.mobidevelop.robovm.intellij-maven.xml">org.jetbrains.idea.maven</depends>
     <depends>org.jetbrains.plugins.gradle</depends>
     <depends>com.intellij.modules.java</depends>
-    <idea-version since-build="193.1"/>
+    <idea-version since-build="223"/>
 
     <name>MobiVM</name>
     <description>
@@ -18,14 +18,21 @@
     </description>
     <change-notes>
         <![CDATA[
-            <b>2.3.17</b>
-            <li> Debugger improvements, thread statuses </li>
-            <li> IDEA plugin update </li>
-            <li> Memory optimizations </li>
-            <li> Fix debugger crashes </li>
-            <li> iOS 15.4 binding updates </li>
-            <li> Sideloading app fixes </li>
-            <li> m1 arm simulator fixes </li>
+            <b>2.3.21</b>
+
+            <h2>New Features</h2>
+            <ul>
+                <li>iOS 17 bindings</li>
+                <li>IDEA 2024.1 support</li>
+                <li>IDEA Run configuration enhancements and debugging</li>
+            </ul>
+            <h2>Bug Fixes</h2>
+            <ul>
+                <li>Run configuration enhancements and debugging</li>
+                <li>Device deployment fix for multiple connected devices</li>
+                <li>Fix case of private classes with multiple constructors</li>
+                <li>Workaround for debugger inner class</li>
+            </ul>
         ]]>
     </change-notes>
 
@@ -44,6 +51,19 @@
         <!--<applicationConfigurable implementation="org.robovm.idea.config.RoboVmGlobalConfig"></applicationConfigurable>-->
         <toolWindow id="RoboVM" anchor="bottom" icon="org.robovm.idea.RoboVmIcons.ROBOVM_SMALL" secondary="true"
                     factoryClass="org.robovm.idea.components.RoboVmToolWindowFactory"/>
+
+        <!--group.names.language.level.specific.issues.and.migration.aids-->
+        <localInspection language="JAVA"
+                         shortName="ClassWithProtocolShouldExtendNSObject"
+                         bundle="robovm.RvmInspectionBundle"
+                         key="robovm.inspection.objcprotocol.shouldbe.in.nsobject"
+                         groupBundle="robovm.RvmInspectionBundle"
+                         groupKey="robovm.inspection.group"
+                         enabledByDefault="true"
+                         level="WARNING"
+                         implementationClass="org.robovm.idea.inspection.ClassWithProtocolShouldExtendNSObject"
+                         cleanupTool="true"/>
+
     </extensions>
 
     <application-components>
@@ -65,14 +85,16 @@
     </module-components>
 
     <actions>
-        <group id="org.robovm.idea.Menu" text="RoboVM" description="RoboVM menu">
+        <group id="org.robovm.idea.Menu" text="RoboVM" description="RoboVM menu" popup="true">
             <add-to-group group-id="MainMenu" anchor="after" relative-to-action="ToolsMenu"/>
 
             <action id="org.robovm.idea.create-ipa" class="org.robovm.idea.actions.CreateIpaAction" text="Create IPA"
                     description="Create an IPA for App Store or ad-hoc distribution"/>
-            <action id="org.robovm.idea.create-framework" class="org.robovm.idea.actions.CreateFrameworkAction" text="Create Framework"
+            <action id="org.robovm.idea.create-framework" class="org.robovm.idea.actions.CreateFrameworkAction"
+                    text="Create Framework"
                     description="Create a Framework"/>
-            <action id="org.robovm.idea.open-ibxcode" class="org.robovm.idea.actions.GenerateXCodeProjectAction" text="Open in Interface Builder (Xcode)"
+            <action id="org.robovm.idea.open-ibxcode" class="org.robovm.idea.actions.GenerateXCodeProjectAction"
+                    text="Open in Interface Builder (Xcode)"
                     description="Generate and open XCode project to edit xib/storyboard in Interface Builder"/>
             <separator/>
             <action id="org.robovm.idea.clean-build" class="org.robovm.idea.actions.CleanBuildFoldersAction"
@@ -83,9 +105,12 @@
                     description="Deletes as files in ~/.robovm/cache folder"/>
             <separator/>
 
-            <group id="org.robovm.idea.as-fixes-new" class="org.robovm.idea.actions.ASNewGroup" text="New" description="New project/module workaround for Android Studio" popup="true">
-                <action id="org.robovm.idea.as-fixes-new-project" class="org.robovm.idea.actions.ASNewProjectAction" text="Project..."/>
-                <action id="org.robovm.idea.as-fixes-new-module" class="org.robovm.idea.actions.ASNewModuleAction" text="Module..."/>
+            <group id="org.robovm.idea.as-fixes-new" class="org.robovm.idea.actions.ASNewGroup" text="New"
+                   description="New project/module workaround for Android Studio" popup="true">
+                <action id="org.robovm.idea.as-fixes-new-project" class="org.robovm.idea.actions.ASNewProjectAction"
+                        text="Project..."/>
+                <action id="org.robovm.idea.as-fixes-new-module" class="org.robovm.idea.actions.ASNewModuleAction"
+                        text="Module..."/>
             </group>
         </group>
 

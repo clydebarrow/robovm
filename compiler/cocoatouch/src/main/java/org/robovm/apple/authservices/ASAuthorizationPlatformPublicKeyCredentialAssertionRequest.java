@@ -56,6 +56,16 @@ import org.robovm.apple.coreanimation.*;
     public native NSArray<ASAuthorizationPlatformPublicKeyCredentialDescriptor> getAllowedCredentials();
     @Property(selector = "setAllowedCredentials:")
     public native void setAllowedCredentials(NSArray<ASAuthorizationPlatformPublicKeyCredentialDescriptor> v);
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "largeBlob")
+    public native ASAuthorizationPublicKeyCredentialLargeBlobAssertionInput getLargeBlob();
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "setLargeBlob:")
+    public native void setLargeBlob(ASAuthorizationPublicKeyCredentialLargeBlobAssertionInput v);
     @Property(selector = "challenge")
     public native NSData getChallenge();
     @Property(selector = "setChallenge:")
@@ -65,9 +75,9 @@ import org.robovm.apple.coreanimation.*;
     @Property(selector = "setRelyingPartyIdentifier:")
     public native void setRelyingPartyIdentifier(String v);
     @Property(selector = "userVerificationPreference")
-    public native String getUserVerificationPreference();
+    public native ASAuthorizationPublicKeyCredentialUserVerificationPreference getUserVerificationPreference();
     @Property(selector = "setUserVerificationPreference:")
-    public native void setUserVerificationPreference(String v);
+    public native void setUserVerificationPreference(ASAuthorizationPublicKeyCredentialUserVerificationPreference v);
     @Property(selector = "supportsSecureCoding")
     public static native boolean supportsSecureCoding();
     /*</properties>*/

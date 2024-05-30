@@ -157,9 +157,25 @@ import org.robovm.apple.coreanimation.*;
      * @since Available in iOS 11.3 and later.
      */
     public static final WKWebsiteDataType ServiceWorkerRegistrations = new WKWebsiteDataType("ServiceWorkerRegistrations");
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    public static final WKWebsiteDataType FileSystem = new WKWebsiteDataType("FileSystem");
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    public static final WKWebsiteDataType SearchFieldRecentSearches = new WKWebsiteDataType("SearchFieldRecentSearches");
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    public static final WKWebsiteDataType MediaKeys = new WKWebsiteDataType("MediaKeys");
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    public static final WKWebsiteDataType HashSalt = new WKWebsiteDataType("HashSalt");
     /*</constants>*/
     
-    private static /*<name>*/WKWebsiteDataType/*</name>*/[] values = new /*<name>*/WKWebsiteDataType/*</name>*/[] {/*<value_list>*/FetchCache, DiskCache, MemoryCache, OfflineWebApplicationCache, Cookies, SessionStorage, LocalStorage, WebSQLDatabases, IndexedDBDatabases, ServiceWorkerRegistrations/*</value_list>*/};
+    private static /*<name>*/WKWebsiteDataType/*</name>*/[] values = new /*<name>*/WKWebsiteDataType/*</name>*/[] {/*<value_list>*/FetchCache, DiskCache, MemoryCache, OfflineWebApplicationCache, Cookies, SessionStorage, LocalStorage, WebSQLDatabases, IndexedDBDatabases, ServiceWorkerRegistrations, FileSystem, SearchFieldRecentSearches, MediaKeys, HashSalt/*</value_list>*/};
     
     /*<name>*/WKWebsiteDataType/*</name>*/ (String getterName) {
         super(Values.class, getterName);
@@ -232,6 +248,26 @@ import org.robovm.apple.coreanimation.*;
          */
         @GlobalValue(symbol="WKWebsiteDataTypeServiceWorkerRegistrations", optional=true)
         public static native NSString ServiceWorkerRegistrations();
+        /**
+         * @since Available in iOS 16.0 and later.
+         */
+        @GlobalValue(symbol="WKWebsiteDataTypeFileSystem", optional=true)
+        public static native NSString FileSystem();
+        /**
+         * @since Available in iOS 17.0 and later.
+         */
+        @GlobalValue(symbol="WKWebsiteDataTypeSearchFieldRecentSearches", optional=true)
+        public static native NSString SearchFieldRecentSearches();
+        /**
+         * @since Available in iOS 17.0 and later.
+         */
+        @GlobalValue(symbol="WKWebsiteDataTypeMediaKeys", optional=true)
+        public static native NSString MediaKeys();
+        /**
+         * @since Available in iOS 17.0 and later.
+         */
+        @GlobalValue(symbol="WKWebsiteDataTypeHashSalt", optional=true)
+        public static native NSString HashSalt();
         /*</values>*/
     }
 }

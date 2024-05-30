@@ -94,6 +94,17 @@ import org.robovm.apple.coreanimation.*;
     /*<constants>*/
     public static final PKPaymentNetwork Amex = new PKPaymentNetwork("Amex");
     /**
+     * @since Available in iOS 16.0 and later.
+     * @deprecated Deprecated in iOS 17.0. Use PKPaymentNetworkPagoBancomat instead.
+     */
+    @Deprecated
+    public static final PKPaymentNetwork Bancomat = new PKPaymentNetwork("Bancomat");
+    public static final PKPaymentNetwork PagoBancomat = new PKPaymentNetwork("PagoBancomat");
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    public static final PKPaymentNetwork Bancontact = new PKPaymentNetwork("Bancontact");
+    /**
      * @since Available in iOS 10.3 and later.
      * @deprecated Deprecated in iOS 11.0. Use PKPaymentNetworkCartesBancaires instead.
      */
@@ -185,9 +196,17 @@ import org.robovm.apple.coreanimation.*;
      * @since Available in iOS 15.0 and later.
      */
     public static final PKPaymentNetwork Nanaco = new PKPaymentNetwork("Nanaco");
+    /**
+     * @since Available in iOS 16.4 and later.
+     */
+    public static final PKPaymentNetwork PostFinance = new PKPaymentNetwork("PostFinance");
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    public static final PKPaymentNetwork Tmoney = new PKPaymentNetwork("Tmoney");
     /*</constants>*/
     
-    private static /*<name>*/PKPaymentNetwork/*</name>*/[] values = new /*<name>*/PKPaymentNetwork/*</name>*/[] {/*<value_list>*/Amex, CarteBancaire, CarteBancaires, CartesBancaires, ChinaUnionPay, Dankort, Discover, Eftpos, Electron, Elo, IDCredit, Interac, JCB, Mada, Maestro, MasterCard, Mir, PrivateLabel, QuicPay, Suica, Visa, VPay, Barcode, Girocard, Waon, Nanaco/*</value_list>*/};
+    private static /*<name>*/PKPaymentNetwork/*</name>*/[] values = new /*<name>*/PKPaymentNetwork/*</name>*/[] {/*<value_list>*/Amex, Bancomat, PagoBancomat, Bancontact, CarteBancaire, CarteBancaires, CartesBancaires, ChinaUnionPay, Dankort, Discover, Eftpos, Electron, Elo, IDCredit, Interac, JCB, Mada, Maestro, MasterCard, Mir, PrivateLabel, QuicPay, Suica, Visa, VPay, Barcode, Girocard, Waon, Nanaco, PostFinance, Tmoney/*</value_list>*/};
     
     /*<name>*/PKPaymentNetwork/*</name>*/ (String getterName) {
         super(Values.class, getterName);
@@ -212,6 +231,20 @@ import org.robovm.apple.coreanimation.*;
         /*<values>*/
         @GlobalValue(symbol="PKPaymentNetworkAmex", optional=true)
         public static native NSString Amex();
+        /**
+         * @since Available in iOS 16.0 and later.
+         * @deprecated Deprecated in iOS 17.0. Use PKPaymentNetworkPagoBancomat instead.
+         */
+        @Deprecated
+        @GlobalValue(symbol="PKPaymentNetworkBancomat", optional=true)
+        public static native NSString Bancomat();
+        @GlobalValue(symbol="PKPaymentNetworkPagoBancomat", optional=true)
+        public static native NSString PagoBancomat();
+        /**
+         * @since Available in iOS 16.0 and later.
+         */
+        @GlobalValue(symbol="PKPaymentNetworkBancontact", optional=true)
+        public static native NSString Bancontact();
         /**
          * @since Available in iOS 10.3 and later.
          * @deprecated Deprecated in iOS 11.0. Use PKPaymentNetworkCartesBancaires instead.
@@ -329,6 +362,16 @@ import org.robovm.apple.coreanimation.*;
          */
         @GlobalValue(symbol="PKPaymentNetworkNanaco", optional=true)
         public static native NSString Nanaco();
+        /**
+         * @since Available in iOS 16.4 and later.
+         */
+        @GlobalValue(symbol="PKPaymentNetworkPostFinance", optional=true)
+        public static native NSString PostFinance();
+        /**
+         * @since Available in iOS 17.0 and later.
+         */
+        @GlobalValue(symbol="PKPaymentNetworkTmoney", optional=true)
+        public static native NSString Tmoney();
         /*</values>*/
     }
 }

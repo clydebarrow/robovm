@@ -39,6 +39,7 @@ import org.robovm.apple.fileprovider.*;
 import org.robovm.apple.intents.*;
 import org.robovm.apple.usernotifications.*;
 import org.robovm.apple.linkpresentation.*;
+import org.robovm.apple.symbols.*;
 /*</imports>*/
 
 /*<javadoc>*/
@@ -47,7 +48,7 @@ import org.robovm.apple.linkpresentation.*;
 /*<annotations>*/@Library("UIKit") @NativeClass/*</annotations>*/
 /*<visibility>*/public/*</visibility>*/ class /*<name>*/UIBarButtonItem/*</name>*/
     extends /*<extends>*/UIBarItem/*</extends>*/
-    /*<implements>*/implements NSCoding, UISpringLoadedInteractionSupporting/*</implements>*/ {
+    /*<implements>*/implements NSCoding, UISpringLoadedInteractionSupporting, UIPopoverPresentationControllerSourceItem/*</implements>*/ {
 
     /*<ptr>*/public static class UIBarButtonItemPtr extends Ptr<UIBarButtonItem, UIBarButtonItemPtr> {}/*</ptr>*/
     /*<bind>*/static { ObjCRuntime.bind(UIBarButtonItem.class); }/*</bind>*/
@@ -118,7 +119,7 @@ import org.robovm.apple.linkpresentation.*;
             initObject(init(systemItem, l, handleClick));
             this.addStrongRef(l);
         } else {
-            initObject(init(systemItem, null, null));
+            initObject(init(systemItem, (NSObject)null, (Selector)null));
         }
     }
 
@@ -163,6 +164,21 @@ import org.robovm.apple.linkpresentation.*;
      */
     @Method(selector = "initWithImage:menu:")
     public UIBarButtonItem(UIImage image, UIMenu menu) { super((SkipInit) null); initObject(init(image, menu)); }
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Method(selector = "initWithPrimaryAction:menu:")
+    public UIBarButtonItem(UIAction primaryAction, UIMenu menu) { super((SkipInit) null); initObject(init(primaryAction, menu)); }
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Method(selector = "initWithBarButtonSystemItem:primaryAction:menu:")
+    public UIBarButtonItem(UIBarButtonSystemItem systemItem, UIAction primaryAction, UIMenu menu) { super((SkipInit) null); initObject(init(systemItem, primaryAction, menu)); }
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Method(selector = "initWithTitle:image:target:action:menu:")
+    public UIBarButtonItem(String title, UIImage image, NSObject target, Selector action, UIMenu menu) { super((SkipInit) null); initObject(init(title, image, target, action, menu)); }
     /*</constructors>*/
 
     public void setOnClickListener(OnClickListener listener) {
@@ -222,6 +238,16 @@ import org.robovm.apple.linkpresentation.*;
     @Property(selector = "setMenu:")
     public native void setMenu(UIMenu v);
     /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Property(selector = "preferredMenuElementOrder")
+    public native UIContextMenuConfigurationElementOrder getPreferredMenuElementOrder();
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Property(selector = "setPreferredMenuElementOrder:")
+    public native void setPreferredMenuElementOrder(UIContextMenuConfigurationElementOrder v);
+    /**
      * @since Available in iOS 15.0 and later.
      */
     @Property(selector = "changesSelectionAsPrimaryAction")
@@ -241,6 +267,36 @@ import org.robovm.apple.linkpresentation.*;
      */
     @Property(selector = "setSelected:")
     public native void setSelected(boolean v);
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Property(selector = "isHidden")
+    public native boolean isHidden();
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Property(selector = "setHidden:")
+    public native void setHidden(boolean v);
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "isSymbolAnimationEnabled")
+    public native boolean isSymbolAnimationEnabled();
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "setSymbolAnimationEnabled:")
+    public native void setSymbolAnimationEnabled(boolean v);
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Property(selector = "menuRepresentation")
+    public native UIMenuElement getMenuRepresentation();
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Property(selector = "setMenuRepresentation:")
+    public native void setMenuRepresentation(UIMenuElement v);
     @Property(selector = "tintColor")
     public native UIColor getTintColor();
     @Property(selector = "setTintColor:")
@@ -300,6 +356,36 @@ import org.robovm.apple.linkpresentation.*;
      */
     @Method(selector = "initWithImage:menu:")
     protected native @Pointer long init(UIImage image, UIMenu menu);
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Method(selector = "initWithPrimaryAction:menu:")
+    protected native @Pointer long init(UIAction primaryAction, UIMenu menu);
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Method(selector = "initWithBarButtonSystemItem:primaryAction:menu:")
+    protected native @Pointer long init(UIBarButtonSystemItem systemItem, UIAction primaryAction, UIMenu menu);
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Method(selector = "initWithTitle:image:target:action:menu:")
+    protected native @Pointer long init(String title, UIImage image, NSObject target, Selector action, UIMenu menu);
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Method(selector = "creatingFixedGroup")
+    public native UIBarButtonItemGroup creatingFixedGroup();
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Method(selector = "creatingMovableGroupWithCustomizationIdentifier:")
+    public native UIBarButtonItemGroup creatingMovableGroup(String customizationIdentifier);
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Method(selector = "creatingOptionalGroupWithCustomizationIdentifier:inDefaultCustomization:")
+    public native UIBarButtonItemGroup creatingOptionalGroup(String customizationIdentifier, boolean inDefaultCustomization);
     @Method(selector = "setBackgroundImage:forState:barMetrics:")
     public native void setBackgroundImage(UIImage backgroundImage, UIControlState state, UIBarMetrics barMetrics);
     @Method(selector = "backgroundImageForState:barMetrics:")
@@ -338,5 +424,65 @@ import org.robovm.apple.linkpresentation.*;
      */
     @Method(selector = "flexibleSpaceItem")
     public static native UIBarButtonItem flexibleSpaceItem();
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Method(selector = "addSymbolEffect:")
+    public native void addSymbolEffect(NSSymbolEffect symbolEffect);
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Method(selector = "addSymbolEffect:options:")
+    public native void addSymbolEffect(NSSymbolEffect symbolEffect, NSSymbolEffectOptions options);
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Method(selector = "addSymbolEffect:options:animated:")
+    public native void addSymbolEffect(NSSymbolEffect symbolEffect, NSSymbolEffectOptions options, boolean animated);
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Method(selector = "removeSymbolEffectOfType:")
+    public native void removeSymbolEffectOfType(NSSymbolEffect symbolEffect);
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Method(selector = "removeSymbolEffectOfType:options:")
+    public native void removeSymbolEffect(NSSymbolEffect symbolEffect, NSSymbolEffectOptions options);
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Method(selector = "removeSymbolEffectOfType:options:animated:")
+    public native void removeSymbolEffect(NSSymbolEffect symbolEffect, NSSymbolEffectOptions options, boolean animated);
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Method(selector = "removeAllSymbolEffects")
+    public native void removeAllSymbolEffects();
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Method(selector = "removeAllSymbolEffectsWithOptions:")
+    public native void removeAllSymbolEffect(NSSymbolEffectOptions options);
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Method(selector = "removeAllSymbolEffectsWithOptions:animated:")
+    public native void removeAllSymbolEffects(NSSymbolEffectOptions options, boolean animated);
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Method(selector = "setSymbolImage:withContentTransition:")
+    public native void setSymbolImage(UIImage symbolImage, NSSymbolContentTransition transition);
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Method(selector = "setSymbolImage:withContentTransition:options:")
+    public native void setSymbolImage(UIImage symbolImage, NSSymbolContentTransition transition, NSSymbolEffectOptions options);
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Method(selector = "frameInView:")
+    public native @ByVal CGRect frameInView(UIView referenceView);
     /*</methods>*/
 }

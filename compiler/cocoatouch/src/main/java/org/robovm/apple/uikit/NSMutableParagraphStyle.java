@@ -39,6 +39,7 @@ import org.robovm.apple.fileprovider.*;
 import org.robovm.apple.intents.*;
 import org.robovm.apple.usernotifications.*;
 import org.robovm.apple.linkpresentation.*;
+import org.robovm.apple.symbols.*;
 /*</imports>*/
 
 /*<javadoc>*/
@@ -148,6 +149,10 @@ import org.robovm.apple.linkpresentation.*;
      */
     @Property(selector = "setLineBreakStrategy:")
     public native void setLineBreakStrategy(NSLineBreakStrategy v);
+    @Property(selector = "textLists")
+    public native NSArray<NSTextList> getTextLists();
+    @Property(selector = "setTextLists:")
+    public native void setTextLists(NSArray<NSTextList> v);
     @Property(selector = "defaultParagraphStyle")
     public static native NSParagraphStyle getDefaultParagraphStyle();
     @Property(selector = "supportsSecureCoding")

@@ -39,6 +39,7 @@ import org.robovm.apple.fileprovider.*;
 import org.robovm.apple.intents.*;
 import org.robovm.apple.usernotifications.*;
 import org.robovm.apple.linkpresentation.*;
+import org.robovm.apple.symbols.*;
 /*</imports>*/
 
 /*<javadoc>*/
@@ -162,6 +163,21 @@ import org.robovm.apple.linkpresentation.*;
      */
     @Method(selector = "endFloatingCursor")
     void endFloatingCursor();
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Method(selector = "editMenuForTextRange:suggestedActions:")
+    UIMenu getEditMenu(UITextRange textRange, NSArray<UIMenuElement> suggestedActions);
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Method(selector = "willPresentEditMenuWithAnimator:")
+    void willPresentEditMenu(UIEditMenuInteractionAnimating animator);
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Method(selector = "willDismissEditMenuWithAnimator:")
+    void willDismissEditMenu(UIEditMenuInteractionAnimating animator);
     /*</methods>*/
     /*<adapter>*/
     /*</adapter>*/

@@ -261,6 +261,10 @@ public abstract class AbstractTarget implements Target {
             }
         }
 
+        if (config.getTools() != null && config.getTools().getLinker() != null) {
+            ccArgs.addAll(config.getTools().getLinker().getLinkerFlags());
+        }
+
         doBuild(outFile, ccArgs, objectFiles, libs);
         return outFile;
     }
@@ -325,6 +329,7 @@ public abstract class AbstractTarget implements Target {
 
     protected void copyDynamicFrameworks(File destDir, File appExecutable) throws IOException {
         final Set<String> swiftLibraries = new HashSet<>();
+        final Set<String> weakSwiftLibraries = new HashSet<>();
         File frameworksDir = new File(destDir, "Frameworks");
 
         for (String framework : config.getFrameworks()) {
@@ -376,7 +381,7 @@ public abstract class AbstractTarget implements Target {
                                     // check if this dylib depends on Swift
                                     // and register those libraries to be copied
                                     // to bundle.app/Frameworks
-                                    getSwiftDependencies(file, swiftLibraries);
+                                    getSwiftDependencies(file, swiftLibraries, weakSwiftLibraries);
                                 }
                             }
                         }
@@ -388,7 +393,7 @@ public abstract class AbstractTarget implements Target {
 
         if (config.hasSwiftSupport() && config.getSwiftSupport().shouldCopySwiftLibs()) {
             // find swift libraries that might be referenced in executable due static linking
-            getSwiftDependencies(appExecutable, swiftLibraries);
+            getSwiftDependencies(appExecutable, swiftLibraries, weakSwiftLibraries);
 
             // workaround: check if libs contain reference to swift lib
             // if project links against static swift library it requires
@@ -398,23 +403,30 @@ public abstract class AbstractTarget implements Target {
                 String p = lib.getValue();
                 if (p.startsWith("libswift") && p.endsWith(".dylib") && !new File(p).exists()) {
                     swiftLibraries.add(p);
+                    if (!lib.isForce()) weakSwiftLibraries.add(p);
                 }
             }
 
             // copy Swift libraries if required
             if (!swiftLibraries.isEmpty()) {
-                copySwiftLibs(swiftLibraries, frameworksDir, true);
+                copySwiftLibs(swiftLibraries, weakSwiftLibraries, frameworksDir, true);
             }
         }
     }
 
-    protected void getSwiftDependencies(File file, Collection<String> swiftLibraries) throws IOException {
+    protected void getSwiftDependencies(File file, Collection<String> swiftLibraries, Collection<String> weakSwiftLibraries) throws IOException {
         String dependencies = ToolchainUtil.otool(file);
-        Pattern swiftLibraryPattern = Pattern.compile("@rpath/(libswift.+\\.dylib)");
+        // dependency string example
+        // @rpath/libswiftXPC.dylib (compatibility version 1.0.0, current version 36.100.7, weak)
+        Pattern swiftLibraryPattern = Pattern.compile("@rpath/(libswift.+\\.dylib)(?:.*(weak))?");
         Matcher matcher = swiftLibraryPattern.matcher(dependencies);
         while (matcher.find()) {
             String library = matcher.group(1);
             swiftLibraries.add(library);
+            if (matcher.groupCount() > 1) {
+                // `weak` was present, consider library for weak linking
+                weakSwiftLibraries.add(library);
+            }
         }
     }
 
@@ -558,13 +570,13 @@ public abstract class AbstractTarget implements Target {
         }
     }
 
-    private File locateSwiftLib(File[] swiftDirs, String swiftLib) throws FileNotFoundException {
+    private File locateSwiftLib(File[] swiftDirs, String swiftLib) {
         for (File swiftDir : swiftDirs) {
             File f = new File(swiftDir, swiftLib);
             if (f.exists())
                 return f;
         }
-        throw new FileNotFoundException(swiftLib + " is not found in swift paths");
+        return null;
     }
 
     private File[] getSwiftDirs(Config config) throws IOException {
@@ -641,22 +653,29 @@ public abstract class AbstractTarget implements Target {
         return swiftDirs.toArray(new File[0]);
     }
 
-	protected void copySwiftLibs(Collection<String> swiftLibraries, File targetDir, boolean strip) throws IOException {
+	protected void copySwiftLibs(Collection<String> swiftLibraries, Collection<String> weakSwiftLibraries,
+                                 File targetDir, boolean strip) throws IOException {
 		File[] swiftDirs = getSwiftDirs(config);
 
 		// dkimitsa: there is hidden dependencies possible between swift libraries.
 		// e.g. one swiftLib has dependency that is not listed in included framework
 		// solve this by moving through all swiftLibs and resolve their not listed dependencies
 		Set<String> libsToResolve = new HashSet<>(swiftLibraries);
+        Set<String> weakLibs = new HashSet<>(weakSwiftLibraries);
 		Map<String, File> resolvedLibs = new HashMap<>();
 		while (!libsToResolve.isEmpty()) {
 			for (String library : new HashSet<>(libsToResolve)) {
 				libsToResolve.remove(library);
 				if (!resolvedLibs.containsKey(library)) {
                     File swiftLibrary = locateSwiftLib(swiftDirs, library);
-                    resolvedLibs.put(library, swiftLibrary);
-
-                    getSwiftDependencies(swiftLibrary, libsToResolve);
+                    if (swiftLibrary != null) {
+                        resolvedLibs.put(library, swiftLibrary);
+                        getSwiftDependencies(swiftLibrary, libsToResolve, weakLibs);
+                    } else {
+                        if (weakLibs.contains(library))
+                            config.getLogger().warn("Weak " + library + " is not found in swift paths");
+                        else throw new FileNotFoundException(library + " is not found in swift paths");
+                    }
                 }
 			}
 		}
@@ -688,8 +707,8 @@ public abstract class AbstractTarget implements Target {
         List<String> archesToRemove = new ArrayList<>();
 
         // simulator ones
-        if(archs.contains(CpuArch.x86.getClangName())) {
-            archesToRemove.add(CpuArch.x86.getClangName());
+        if(archs.contains("i386")) {
+            archesToRemove.add("i386");
         }
         if(archs.contains(CpuArch.x86_64.getClangName())) {
             archesToRemove.add(CpuArch.x86_64.getClangName());
@@ -911,6 +930,7 @@ public abstract class AbstractTarget implements Target {
         } catch (IOException e) {
             IOUtils.closeQuietly(out);
             output.delete();
+            config.getLogger().error("Filed to strip archive file %s due %s", output, e.getMessage());
         } finally {
             IOUtils.closeQuietly(out);
         }

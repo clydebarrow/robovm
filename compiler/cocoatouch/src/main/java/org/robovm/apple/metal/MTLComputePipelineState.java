@@ -67,6 +67,11 @@ import org.robovm.apple.dispatch.*;
      */
     @Property(selector = "supportIndirectCommandBuffers")
     public native boolean isSupportIndirectCommandBuffers();
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Property(selector = "gpuResourceID")
+    public native @ByVal MTLResourceID getGpuResourceID();
     /*</properties>*/
     /*<members>*//*</members>*/
     /*<methods>*/
@@ -84,7 +89,7 @@ import org.robovm.apple.dispatch.*;
      * @since Available in iOS 14.0 and later.
      */
     @Method(selector = "newComputePipelineStateWithAdditionalBinaryFunctions:error:")
-    public native MTLComputePipelineState newComputePipelineState(NSArray<?> functions, NSError.NSErrorPtr error);
+    public native MTLComputePipelineState newComputePipelineState(NSArray<MTLFunction> functions, NSError.NSErrorPtr error);
     /**
      * @since Available in iOS 14.0 and later.
      */

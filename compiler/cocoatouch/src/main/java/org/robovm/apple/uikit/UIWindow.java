@@ -39,6 +39,7 @@ import org.robovm.apple.fileprovider.*;
 import org.robovm.apple.intents.*;
 import org.robovm.apple.usernotifications.*;
 import org.robovm.apple.linkpresentation.*;
+import org.robovm.apple.symbols.*;
 /*</imports>*/
 
 /*<javadoc>*/
@@ -191,6 +192,11 @@ import org.robovm.apple.linkpresentation.*;
     @WeaklyLinked
     @Property(selector = "layerClass")
     public static native Class<? extends CALayer> getLayerClass();
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Property(selector = "safeAreaAspectFitLayoutGuide")
+    public native UILayoutGuide getSafeAreaAspectFitLayoutGuide();
     /*</properties>*/
     /*<members>*//*</members>*/
     /*<methods>*/

@@ -38,6 +38,8 @@ import org.robovm.apple.coremedia.*;
 import org.robovm.apple.corevideo.*;
 import org.robovm.apple.mediatoolbox.*;
 import org.robovm.apple.audiotoolbox.*;
+import org.robovm.apple.coremidi.*;
+import org.robovm.apple.uikit.*;
 /*</imports>*/
 
 /*<javadoc>*/
@@ -102,6 +104,41 @@ import org.robovm.apple.audiotoolbox.*;
      */
     @Property(selector = "setMaxPhotoQualityPrioritization:")
     public native void setMaxPhotoQualityPrioritization(AVCapturePhotoQualityPrioritization v);
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "isFastCapturePrioritizationSupported")
+    public native boolean isFastCapturePrioritizationSupported();
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "setFastCapturePrioritizationSupported:")
+    public native void setFastCapturePrioritizationSupported(boolean v);
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "isFastCapturePrioritizationEnabled")
+    public native boolean isFastCapturePrioritizationEnabled();
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "setFastCapturePrioritizationEnabled:")
+    public native void setFastCapturePrioritizationEnabled(boolean v);
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "isAutoDeferredPhotoDeliverySupported")
+    public native boolean isAutoDeferredPhotoDeliverySupported();
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "isAutoDeferredPhotoDeliveryEnabled")
+    public native boolean isAutoDeferredPhotoDeliveryEnabled();
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "setAutoDeferredPhotoDeliveryEnabled:")
+    public native void setAutoDeferredPhotoDeliveryEnabled(boolean v);
     /**
      * @since Available in iOS 10.0 and later.
      * @deprecated Deprecated in iOS 13.0. Use maxPhotoQualityPrioritization
@@ -182,10 +219,30 @@ import org.robovm.apple.audiotoolbox.*;
     public native AVCapturePhotoSettings getPhotoSettingsForSceneMonitoring();
     @Property(selector = "setPhotoSettingsForSceneMonitoring:")
     public native void setPhotoSettingsForSceneMonitoring(AVCapturePhotoSettings v);
+    /**
+     * @since Available in iOS 10.0 and later.
+     * @deprecated Deprecated in iOS 16.0. Use maxPhotoDimensions instead.
+     */
+    @Deprecated
     @Property(selector = "isHighResolutionCaptureEnabled")
     public native boolean isHighResolutionCaptureEnabled();
+    /**
+     * @since Available in iOS 10.0 and later.
+     * @deprecated Deprecated in iOS 16.0. Use maxPhotoDimensions instead.
+     */
+    @Deprecated
     @Property(selector = "setHighResolutionCaptureEnabled:")
     public native void setHighResolutionCaptureEnabled(boolean v);
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Property(selector = "maxPhotoDimensions")
+    public native @ByVal CMVideoDimensions getMaxPhotoDimensions();
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Property(selector = "setMaxPhotoDimensions:")
+    public native void setMaxPhotoDimensions(@ByVal CMVideoDimensions v);
     @Property(selector = "maxBracketedCapturePhotoCount")
     public native @MachineSizedUInt long getMaxBracketedCapturePhotoCount();
     @Property(selector = "isLensStabilizationDuringBracketedCaptureSupported")
@@ -200,6 +257,16 @@ import org.robovm.apple.audiotoolbox.*;
     public native boolean isLivePhotoCaptureSuspended();
     @Property(selector = "setLivePhotoCaptureSuspended:")
     public native void setLivePhotoCaptureSuspended(boolean v);
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Property(selector = "preservesLivePhotoCaptureSuspendedOnSessionStop")
+    public native boolean preservesLivePhotoCaptureSuspendedOnSessionStop();
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Property(selector = "setPreservesLivePhotoCaptureSuspendedOnSessionStop:")
+    public native void setPreservesLivePhotoCaptureSuspendedOnSessionStop(boolean v);
     @Property(selector = "isLivePhotoAutoTrimmingEnabled")
     public native boolean isLivePhotoAutoTrimmingEnabled();
     @Property(selector = "setLivePhotoAutoTrimmingEnabled:")
@@ -224,6 +291,41 @@ import org.robovm.apple.audiotoolbox.*;
      */
     @Property(selector = "setContentAwareDistortionCorrectionEnabled:")
     public native void setContentAwareDistortionCorrectionEnabled(boolean v);
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "isZeroShutterLagSupported")
+    public native boolean isZeroShutterLagSupported();
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "isZeroShutterLagEnabled")
+    public native boolean isZeroShutterLagEnabled();
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "setZeroShutterLagEnabled:")
+    public native void setZeroShutterLagEnabled(boolean v);
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "isResponsiveCaptureSupported")
+    public native boolean isResponsiveCaptureSupported();
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "isResponsiveCaptureEnabled")
+    public native boolean isResponsiveCaptureEnabled();
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "setResponsiveCaptureEnabled:")
+    public native void setResponsiveCaptureEnabled(boolean v);
+    /**
+     * @since Available in iOS 17.0 and later.
+     */
+    @Property(selector = "captureReadiness")
+    public native AVCapturePhotoOutputCaptureReadiness getCaptureReadiness();
     /**
      * @since Available in iOS 11.0 and later.
      */

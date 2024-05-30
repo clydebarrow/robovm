@@ -39,6 +39,7 @@ import org.robovm.apple.fileprovider.*;
 import org.robovm.apple.intents.*;
 import org.robovm.apple.usernotifications.*;
 import org.robovm.apple.linkpresentation.*;
+import org.robovm.apple.symbols.*;
 /*</imports>*/
 
 /*<javadoc>*/
@@ -174,6 +175,11 @@ import org.robovm.apple.linkpresentation.*;
     public native void revealDocument(NSURL url, boolean importIfNeeded, @Block VoidBlock2<NSURL, NSError> completion);
     @Method(selector = "importDocumentAtURL:nextToDocumentAtURL:mode:completionHandler:")
     public native void importDocument(NSURL documentURL, NSURL neighbourURL, UIDocumentBrowserImportMode importMode, @Block VoidBlock2<NSURL, NSError> completion);
+    /**
+     * @since Available in iOS 16.0 and later.
+     */
+    @Method(selector = "renameDocumentAtURL:proposedName:completionHandler:")
+    public native void renameDocument(NSURL documentURL, String proposedName, @Block VoidBlock2<NSURL, NSError> completionHandler);
     /**
      * @since Available in iOS 12.0 and later.
      */
